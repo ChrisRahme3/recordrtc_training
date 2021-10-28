@@ -1,0 +1,19 @@
+{
+  "name": "recordrtc_training",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChrisRahme3/recordrtc_training.git"
+  },
+  "author": "Chris Rahmé",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ChrisRahme3/recordrtc_training/issues"
+  },
+  "homepage": "https://github.com/ChrisRahme3/recordrtc_training#readme"
+}
