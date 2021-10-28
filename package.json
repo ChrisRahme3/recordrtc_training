@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/ChrisRahme3/recordrtc_training/issues"
   },
-  "homepage": "https://github.com/ChrisRahme3/recordrtc_training#readme"
+  "homepage": "https://github.com/ChrisRahme3/recordrtc_training#readme",
+  "dependencies": {
+    "recordrtc": "^5.6.2"
+  }
 }
