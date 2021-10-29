@@ -85,7 +85,7 @@
     </main>
 
     <script> // Global variables
-        const MY_DOMAIN = 'webrtc-experiment.com'
+        const MY_DOMAIN = 'webrtc-experiment.com' // TODO
 
         var mimeType      = 'video/webm'
         var fileExtension = 'webm'
@@ -94,6 +94,8 @@
         var recorderType
         var defaultWidth
         var defaultHeight
+
+        var videoBitsPerSecond
     </script>
 
     <script> // Helper functions
@@ -171,6 +173,55 @@
                 }, false)
             })
         }
+    
+        
+        function isMimeTypeSupported(mimeType) {
+            if (typeof MediaRecorder === 'undefined') {
+                return false
+            }
+
+            if (typeof MediaRecorder.isTypeSupported !== 'function') {
+                return true
+            }
+
+            return MediaRecorder.isTypeSupported(mimeType);
+        } // END function isMimeTypeSupported
+    
+
+        function makeFileName(fileExtension) {
+            var d = new Date().toISOString()
+                .replace(/:/g, '-').replace(/\./g, '-')
+                .replace(/T/g, '_').replace(/Z/g, '')
+
+            return `ScreenRecord_${d}.${fileExtension}`
+        } // END function makeFileName
+    
+    
+        function isMyOwnDomain() {
+            return document.domain.indexOf(MY_DOMAIN) !== -1;
+        } // END function isMyOwnDomain
+
+
+        function isLocalHost() {
+            return document.domain === 'localhost' || document.domain === '127.0.0.1';
+        } // END function isLocalHost
+
+
+        function mediaRecorderToStringify(mediaRecorder) {
+            var result = `
+                mimeType: ${mediaRecorder.mimeType},
+                state: ${mediaRecorder.state},
+                audioBitsPerSecond: ${mediaRecorder.audioBitsPerSecond},
+                videoBitsPerSecond: ${mediaRecorder.videoBitsPerSecond}`
+
+            if (mediaRecorder.stream) {
+                result += `,
+                    streamid: ${mediaRecorder.stream.id},
+                    stream-active: ${mediaRecorder.stream.active}`
+            }
+
+            return result
+        } // END function mediaRecorderToStringify
     </script>
 
     <script> // Creating HTML Elements
@@ -198,6 +249,26 @@
 
         media_element.media.parentNode.appendChild(media_element_container)
         media_element_container.appendChild(media_element.media)
+
+        function initFormats() {
+            var filetype_options = []
+
+            var checks = [
+                [isMimeTypeSupported('video/webm\;codecs=h264'),      'mp4'        ],
+                [isMimeTypeSupported('video/x-matroska;codecs=avc1'), 'mkv'        ],
+                [true,                                                'vp8'        ],
+                [isMimeTypeSupported('video/webm\;codecs=vp9'),       'vp9'        ],
+                [true,                                                'gif'        ],
+                [DetectRTC.browser.name == 'Chrome',                  'whammy'     ],
+                [DetectRTC.browser.name == 'Chrome',                  'WebAssembly'],
+            ]
+
+            checks.forEach(function (check) {
+                if (check[0]) filetype_options.push(check[1])
+            })
+
+            setMediaContainerFormat(filetype_options)
+        }
     </script>
 
     <script> // Capture Functions
@@ -302,6 +373,7 @@
             mediaContainerFormat.disabled = false
         }
 
+
         btnStart.onclick = function(event) {
             if (btnStart.innerHTML === 'Stop') {
                 btnStart.innerHTML = 'Start'
@@ -322,7 +394,7 @@
                         if (btnStart.blobs && btnStart.blobs.length) {
                             const blob = new File(
                                 btnStart.blobs,
-                                getFileName(fileExtension),
+                                makeFileName(fileExtension),
                                 {type: mimeType}
                             )
                             
@@ -444,20 +516,6 @@
         } // END btnStart.onclick
 
 
-
-        function isMyOwnDomain() {
-            // replace "webrtc-experiment.com" with your own domain name
-            return document.domain.indexOf(MY_DOMAIN) !== -1;
-        } // END function isMyOwnDomain
-
-        function isLocalHost() {
-            // "chrome.exe" --enable-usermedia-screen-capturing
-            // or firefox => about:config => "media.getusermedia.screensharing.allowed_domains" => add "localhost"
-            return document.domain === 'localhost' || document.domain === '127.0.0.1';
-        } // END function isLocalHost
-
-        var videoBitsPerSecond;
-
         function setVideoBitrates() {
             var select = document.querySelector('.media-bitrates');
             var value = select.value;
@@ -470,19 +528,14 @@
             videoBitsPerSecond = parseInt(value);
         } // END function setVideoBitrates
 
+
         function getFrameRates(mediaConstraints) {
-            if (!mediaConstraints.video) {
-                return mediaConstraints;
-            }
+            var select = document.querySelector('.media-framerates')
+            var value = select.value
 
-            var select = document.querySelector('.media-framerates');
-            var value = select.value;
+            if (!!mediaConstraints.video || value == 'default') return mediaConstraints
 
-            if (value == 'default') {
-                return mediaConstraints;
-            }
-
-            value = parseInt(value);
+            value = parseInt(value)
 
             if (DetectRTC.browser.name === 'Firefox') {
                 mediaConstraints.video.frameRate = value;
@@ -494,60 +547,51 @@
                 mediaConstraints.video.optional = [];
             }
 
-            var isScreen = recordingMedia.value.toString().toLowerCase().indexOf('screen') != -1;
-            if (isScreen) {
+            if (recordingMedia.value.toString().toLowerCase().indexOf('screen') != -1) {
                 mediaConstraints.video.mandatory.maxFrameRate = value;
-            }
-            else {
+            } else {
                 mediaConstraints.video.mandatory.minFrameRate = value;
             }
 
             return mediaConstraints;
         } // END function getFrameRates
 
+
         function setGetFromLocalStorage(selectors) {
             selectors.forEach(function(selector) {
                 var storageItem = selector.replace(/\.|#/g, '');
+
                 if (localStorage.getItem(storageItem)) {
                     document.querySelector(selector).value = localStorage.getItem(storageItem);
                 }
 
                 addEventListenerToUploadLocalStorageItem(selector, ['change', 'blur'], function() {
                     localStorage.setItem(storageItem, document.querySelector(selector).value);
-                });
-            });
+                })
+            })
         } // END function setGetFromLocalStorage
+
 
         function addEventListenerToUploadLocalStorageItem(selector, arr, callback) {
             arr.forEach(function(event) {
                 document.querySelector(selector).addEventListener(event, callback, false);
-            });
+            })
         } // END function addEventListenerToUploadLocalStorageItem
+
 
         setGetFromLocalStorage(
             ['.media-resolutions', '.media-framerates', '.media-bitrates', '.recording-media', '.media-container-format']
-        );
+        )
+
 
         function getVideoResolutions(mediaConstraints) {
-            if (!mediaConstraints.video) {
-                return mediaConstraints;
-            }
-
             var select = document.querySelector('.media-resolutions');
             var value = select.value;
 
-            if (value == 'default') {
-                return mediaConstraints;
-            }
+            if (!mediaConstraints.video || value == 'default') return mediaConstraints
 
             value = value.split('x');
-
-            if (value.length != 2) {
-                return mediaConstraints;
-            }
-
-            defaultWidth = parseInt(value[0]);
-            defaultHeight = parseInt(value[1]);
+            if (value.length != 2) return mediaConstraints
 
             if (DetectRTC.browser.name === 'Firefox') {
                 mediaConstraints.video.width = defaultWidth;
@@ -560,36 +604,30 @@
                 mediaConstraints.video.optional = [];
             }
 
-            var isScreen = recordingMedia.value.toString().toLowerCase().indexOf('screen') != -1;
+            defaultWidth = parseInt(value[0]);
+            defaultHeight = parseInt(value[1]);
 
-            if (isScreen) {
+            if (recordingMedia.value.toString().toLowerCase().indexOf('screen') != -1) {
                 mediaConstraints.video.mandatory.maxWidth = defaultWidth;
                 mediaConstraints.video.mandatory.maxHeight = defaultHeight;
-            }
-            else {
+            } else {
                 mediaConstraints.video.mandatory.minWidth = defaultWidth;
                 mediaConstraints.video.mandatory.minHeight = defaultHeight;
             }
 
             return mediaConstraints;
-        }
+        } // END function getVideoResolutions
+
 
         function captureUserMedia(mediaConstraints, successCallback, errorCallback) {
             if (mediaConstraints.video == true) {
-                mediaConstraints.video = {};
+                mediaConstraints.video = {}
             }
 
-            setVideoBitrates();
+            setVideoBitrates()
 
-            mediaConstraints = getVideoResolutions(mediaConstraints);
-            mediaConstraints = getFrameRates(mediaConstraints);
-
-            var isBlackBerry = !!(/BB10|BlackBerry/i.test(navigator.userAgent || ''));
-            if (isBlackBerry && !!(navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia)) {
-                navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-                navigator.getUserMedia(mediaConstraints, successCallback, errorCallback);
-                return;
-            }
+            mediaConstraints = getVideoResolutions(mediaConstraints)
+            mediaConstraints = getFrameRates(mediaConstraints)
 
             navigator.mediaDevices.getUserMedia(mediaConstraints).then(function(stream) {
                 successCallback(stream);
@@ -597,29 +635,24 @@
                 setVideoURL(stream, true);
             }).catch(function(error) {
                 if (error && (error.name === 'ConstraintNotSatisfiedError' || error.name === 'OverconstrainedError')) {
-                    alert('Your camera or browser does NOT supports selected resolutions or frame-rates. \n\nPlease select "default" resolutions.');
-                }
-                else if (error && error.message) {
+                    alert('Your browser does not support the selected resolution or frame-rates. \n\nPlease select "default".');
+                } else if (error && error.message) {
                     alert(error.message);
-                }
-                else {
+                } else {
                     alert('Unable to make getUserMedia request. Please check browser console logs.');
                 }
 
                 errorCallback(error);
             });
-        }
+        } // END function captureUserMedia
 
+        
         function setMediaContainerFormat(supported_options) {
             var options = Array.prototype.slice.call(
                 mediaContainerFormat.querySelectorAll('option')
             )
 
-            var localStorageItem
-
-            if (localStorage.getItem('media-container-format')) {
-                localStorageItem = localStorage.getItem('media-container-format')
-            }
+            var localStorageItem = localStorage.getItem('media-container-format')
 
             supported_options.forEach(function (option) {
                 var op = document.createElement('option')
@@ -632,41 +665,11 @@
 
                 mediaContainerFormat.appendChild(op)
             })
-        }
-
-        function isMimeTypeSupported(mimeType) {
-            if (typeof MediaRecorder === 'undefined') {
-                return false
-            }
-
-            if (typeof MediaRecorder.isTypeSupported !== 'function') {
-                return true
-            }
-
-            return MediaRecorder.isTypeSupported(mimeType);
-        }
-
-        function initFormats() {
-            var filetype_options = []
-
-            var checks = [
-                [isMimeTypeSupported('video/webm\;codecs=h264'),      'mp4'        ],
-                [isMimeTypeSupported('video/x-matroska;codecs=avc1'), 'mkv'        ],
-                [true,                                                'vp8'        ],
-                [isMimeTypeSupported('video/webm\;codecs=vp9'),       'vp9'        ],
-                [true,                                                'gif'        ],
-                [DetectRTC.browser.name == 'Chrome',                  'whammy'     ],
-                [DetectRTC.browser.name == 'Chrome',                  'WebAssembly'],
-            ]
-
-            checks.forEach(function (check) {
-                if (check[0]) filetype_options.push(check[1])
-            })
-
-            setMediaContainerFormat(filetype_options)
-        }
+        } // END function setMediaContainerFormat
+        
 
         initFormats()
+
 
         if (typeof MediaRecorder === 'undefined' && (DetectRTC.browser.name === 'Edge' || DetectRTC.browser.name === 'Safari')) {
             console.warn('MediaRecorder API and webp are not supported in ' + DetectRTC.browser.name + '.');
@@ -674,26 +677,11 @@
             recordingMedia.innerHTML = '<option value="with-sound">With Sound</option>';
             setMediaContainerFormat(['pcm'])
         }
+    </script>
 
-
-        function mediaRecorderToStringify(mediaRecorder) {
-            var result = `
-                mimeType: ${mediaRecorder.mimeType},
-                state: ${mediaRecorder.state},
-                audioBitsPerSecond: ${mediaRecorder.audioBitsPerSecond},
-                videoBitsPerSecond: ${mediaRecorder.videoBitsPerSecond}`
-
-            if (mediaRecorder.stream) {
-                result += `',
-                    streamid: ${mediaRecorder.stream.id},
-                    stream-active: ${mediaRecorder.stream.active}`
-            }
-
-            return result
-        }
-
+    <script> // Endings
         function getFailureReport() {
-            var info = 'RecordRTC seems failed. \n\n' + stringify(DetectRTC.browser) + '\n\n' + DetectRTC.osName + ' ' + DetectRTC.osVersion + '\n';
+            var info = 'RecordRTC failed.\n\n' + stringify(DetectRTC.browser) + '\n\n' + DetectRTC.osName + ' ' + DetectRTC.osVersion + '\n';
 
             if (typeof recorderType !== 'undefined' && recorderType) {
                 info += '\nrecorderType: ' + recorderType.name;
@@ -753,19 +741,20 @@
             }
 
             return info;
-        }
+        } // END function getFailureReport
+
 
         function downloadVideo(recordRTC) {
             if (!recordRTC.getBlob().size) {
-                var info = getFailureReport();
-                console.log('blob', recordRTC.getBlob());
-                console.log('recordrtc instance', recordRTC);
-                console.log('report', info);
+                var info = getFailureReport()
+                console.error('blob', recordRTC.getBlob())
+                console.error('recordrtc instance', recordRTC)
+                console.error('report', info)
 
                 if (mediaContainerFormat.value !== 'default') {
-                    alert('RecordRTC seems failed recording using ' + mediaContainerFormat.value + '. Please choose "default" option from the drop down and record again.');
+                    alert('Recording failed using ' + mediaContainerFormat.value + '. Please choose "default" option from the drop down and record again.');
                 } else {
-                    alert('RecordRTC seems failed. Unexpected issue. You can read the email in your console log. \n\nPlease report using disqus chat below.');
+                    alert('Recording failed. Unexpected issue. Please see console log.');
                 }
 
                 if (mediaContainerFormat.value !== 'vp9' && DetectRTC.browser.name === 'Chrome') {
@@ -773,21 +762,20 @@
                 }
             }
 
-            var fileName = getFileName(fileExtension);
+            var fileName = makeFileName(fileExtension);
 
             document.querySelector('#save-to-disk').parentNode.style.display = 'block'
             document.querySelector('#save-to-disk').onclick = function() {
-                if (!recordRTC) {
-                    return alert('No recording found.')
-                }
+                if (!recordRTC) return alert('No recording found.')
 
                 var file = new File(
                     [recordRTC.getBlob()],
-                    fileName, {type: mimeType}
+                    fileName,
+                    {type: mimeType}
                 )
 
                 invokeSaveAsDialog(file, file.name)
-            };
+            }
 
             // upload to PHP server
             if (isMyOwnDomain()) {
@@ -803,9 +791,7 @@
                     return;
                 }
 
-                if (!recordRTC) {
-                    return alert('No recording found.')
-                }
+                if (!recordRTC) return alert('No recording found.')
 
                 this.disabled = true;
 
@@ -830,12 +816,13 @@
                     recordingPlayer.parentNode.parentNode.querySelector('h2').innerHTML = progress;
                 });
             };
-        }
+        } // END function downloadVideo
+
 
         function uploadVideo(fileName, recordRTC, callback) {
             var blob = recordRTC instanceof Blob ? recordRTC : recordRTC.getBlob();
             
-            blob = new File([blob], getFileName(fileExtension), {
+            blob = new File([blob], makeFileName(fileExtension), {
                 type: mimeType
             });
 
@@ -860,7 +847,8 @@
 
                 callback('ended', upload_directory + fileName);
             });
-        }
+        } // END function uploadVideo
+
 
         function makeXMLHttpRequest(url, data, callback) {
             var request = new XMLHttpRequest();
@@ -870,9 +858,6 @@
                         callback('upload-ended');
                         return;
                     }
-
-                    document.querySelector('.header').parentNode.style = 'text-align: left; color: red; padding: 5px 10px;';
-                    document.querySelector('.header').parentNode.innerHTML = request.responseText;
                 }
             };
 
@@ -881,7 +866,7 @@
             };
 
             request.upload.onprogress = function(event) {
-                callback('Upload Progress ' + Math.round(event.loaded / event.total * 100) + "%");
+                callback('Upload Progress: ' + Math.round(event.loaded / event.total * 100) + "%");
             };
 
             request.upload.onload = function() {
@@ -889,7 +874,7 @@
             };
 
             request.upload.onload = function() {
-                callback('Getting File URL..');
+                callback('Getting File URL...');
             };
 
             request.upload.onerror = function(error) {
@@ -902,15 +887,8 @@
 
             request.open('POST', url);
             request.send(data);
-        }
+        } // END function makeXMLHttpRequest
 
-        function getFileName(fileExtension) {
-            var d = new Date().toISOString()
-                .replace(/:/g, '-').replace(/\./g, '-')
-                .replace(/T/g, '_').replace(/Z/g, '')
-
-            return `ScreenRecord_${d}.${fileExtension}`
-        }
 
         function saveUrlToDisk(fileUrl, fileName) {
             var hyperlink = document.createElement('a')
@@ -933,71 +911,57 @@
             })
 
             hyperlink.dispatchEvent(mouseEvent)
-        }
+        } // END function saveUrlToDisk
+
 
         function getURL(arg) {
-            var url = arg;
-
             if (arg instanceof Blob || arg instanceof File) {
-                url = URL.createObjectURL(arg);
+                return URL.createObjectURL(arg);
             } else if (arg instanceof RecordRTC || arg.getBlob) {
-                url = URL.createObjectURL(arg.getBlob());
+                return URL.createObjectURL(arg.getBlob());
+            } else {
+                return arg
             }
+        } // END function getURL
 
-            return url;
-        }
 
         function setVideoURL(arg, forceNonImage) {
-            var url = getURL(arg);
-
+            console.log('arg', arg)
             var parentNode = recordingPlayer.parentNode
             parentNode.removeChild(recordingPlayer)
             parentNode.innerHTML = ''
 
-            var elem = ''
-
-            if (type == 'gif' && !forceNonImage) {
-                elem = 'img';
-            } else if (type == 'audio') {
-                elem = 'audio';
-            } else {
-                elem = 'video'
-            }
+            var elem = (type == 'gif' && !forceNonImage) ? 'img'
+                : (type == 'audio') ? 'audio'
+                : 'video'
 
             recordingPlayer = document.createElement(elem);
-            
             recordingPlayer.muted = (arg instanceof MediaStream)
 
             recordingPlayer.addEventListener('loadedmetadata', function() {
-                if (navigator.userAgent.toLowerCase().indexOf('android') == -1) return;
-            }, false);
+                if (navigator.userAgent.toLowerCase().indexOf('android') == -1) return
+            }, false)
 
-            recordingPlayer.poster = '';
+            recordingPlayer.poster = ''
 
             if (arg instanceof MediaStream) {
                 recordingPlayer.srcObject = arg;
-            }
-            else {
-                recordingPlayer.src = url;
+            } else {
+                recordingPlayer.src = getURL(arg);
             }
 
-            if (typeof recordingPlayer.play === 'function') {
-                recordingPlayer.play();
-            }
+            if (typeof recordingPlayer.play === 'function') recordingPlayer.play()
 
             recordingPlayer.addEventListener('ended', function() {
-                url = getURL(arg);
-                
                 if (arg instanceof MediaStream) {
                     recordingPlayer.srcObject = arg;
+                } else {
+                    recordingPlayer.src = getURL(arg);
                 }
-                else {
-                    recordingPlayer.src = url;
-                }
-            });
+            })
 
-            parentNode.appendChild(recordingPlayer);
-        }
+            parentNode.appendChild(recordingPlayer)
+        } // END function setVideoURL
     </script>
 
     <script>
