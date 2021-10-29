@@ -91,13 +91,13 @@
             <div id="recording-info" class="col-3">
                 <div id="recording-control">
                     <button id="btn-start"    class="btn btn-success"                      >Start   </button>
-                    <button id="btn-download" class="btn btn-primary">Download</button>
-                    <button id="btn-upload"   class="btn btn-warning">Upload  </button>
-                    <!-- <button id="btn-download" class="btn btn-primary" style="display: none">Download</button> -->
-                    <!-- <button id="btn-upload"   class="btn btn-warning" style="display: none">Upload  </button> -->
+                    <button id="btn-download" class="btn btn-primary" style="display: none">Download</button>
+                    <button id="btn-upload"   class="btn btn-warning" style="display: none">Upload  </button>
+                    <!-- <button id="btn-download" class="btn btn-primary">Download</button> -->
+                    <!-- <button id="btn-upload"   class="btn btn-warning">Upload  </button> -->
                 </div>
 
-                <div id="recording-feedback form-control" class="mt-4">
+                <div id="recording-feedback" class="mt-4">
                     <h6>Recording Status:</h6>
                     <p id="recording-status" class="form-control">Inactive</p>
                 </div>
@@ -260,7 +260,7 @@
         var video = document.createElement('video')
 
         var media_element = getHTMLMediaElement(video, {
-            title: 'Recording inactive',
+            // title: 'Recording inactive',
             buttons: ['full-screen'],
             showOnMouseEnter: false,
             // width: 720,
@@ -316,6 +316,16 @@
             })
         } // END function setGetFromLocalStorage
 
+    </script>
+
+    <script> // HTML variables
+        var recordingPlayer      = media_element.media
+        var recordingMedia       = document.querySelector('#media-sound')
+        var mediaContainerFormat = document.querySelector('#media-format')
+        var btnStart             = document.querySelector('#btn-start')
+        var btnDownload          = document.querySelector('#btn-download')
+        var btnUpload            = document.querySelector('#btn-upload')
+        var recordingStatus      = document.querySelector('#recording-status')
     </script>
 
     <script> // Capture Functions
@@ -401,11 +411,6 @@
     </script>
     
     <script> // Main
-        var recordingPlayer      = media_element.media
-        var recordingMedia       = document.querySelector('#media-sound')
-        var mediaContainerFormat = document.querySelector('#media-format')
-        var btnStart             = document.querySelector('#btn-start')
-
         window.onbeforeunload = function() {
             btnStart.disabled = false
             recordingMedia.disabled = false
@@ -427,8 +432,8 @@
                     }
 
                     media_bitrate = null
-                    recordingPlayer.parentNode.parentNode.querySelector('h2').innerHTML = 'Recording stopped' +
-                        '<br>Size: ' + formatBytes(btnStart.recordRTC.getBlob().size)
+                    recordingStatus.innerHTML = 'Stopped<br><i>' +
+                        'Size: ' + formatBytes(btnStart.recordRTC.getBlob().size) + '</i>'
                 }
 
                 if (btnStart.recordRTC) {
@@ -469,13 +474,13 @@
                     btnStart.mediaCapturedCallback()
                     btnStart.innerHTML = 'Stop'
                     btnStart.disabled = false
-                    recordingPlayer.parentNode.parentNode.querySelector('h2').innerHTML = 'Recording in progress'
+                    recordingStatus.innerHTML = 'In progress'
                 },
 
                 onMediaStopped: function() {
                     btnStart.innerHTML = 'Start'
                     btnStart.disabled = btnStart.disableStateWaiting
-                    recordingPlayer.parentNode.parentNode.querySelector('h2').innerHTML = 'Recording inactive'
+                    recordingStatus.innerHTML = 'Inactive'
                 },
 
                 onMediaCapturingFailed: function(error) {
@@ -489,8 +494,7 @@
                         alert('Firefox requires version >= 52. Firefox also requires HTTPs.');
                     }
 
-                    recordingPlayer.parentNode.parentNode.querySelector('h2').innerHTML = 'Recording failed' +
-                        '<br>' + error
+                    recordingStatus.innerHTML = 'Failed:<br><code>' + error + '</code>'
                     commonConfig.onMediaStopped()
                 }
             };
@@ -788,19 +792,17 @@
                     alert('Recording failed using ' + mediaContainerFormat.value + '. Please choose "default" option from the drop down and record again.');
                 } else {
                     alert('Recording failed. Unexpected issue. Please see console log.');
-                }
-
-                if (mediaContainerFormat.value !== 'vp9' && DetectRTC.browser.name === 'Chrome') {
+                } if (mediaContainerFormat.value !== 'vp9' && DetectRTC.browser.name === 'Chrome') {
                     alert('Please record using VP9 format.');
                 }
             }
 
             var fileName = makeFileName(fileExtension);
 
-            document.querySelector('#btn-download').style.display = ''
-            document.querySelector('#btn-upload').style.display = ''
+            btnDownload.style.display = ''
+            btnUpload.style.display = ''
 
-            document.querySelector('#btn-download').onclick = function(event) {
+            btnDownload.onclick = function(event) {
                 event.preventDefault()
 
                 if (!recordRTC) return alert('No recording found.')
@@ -812,17 +814,21 @@
                 )
 
                 invokeSaveAsDialog(file, file.name)
+
+                recordingStatus.innerHTML = 'Downloaded<br><i>' +
+                    'Size: ' + formatBytes(btnStart.recordRTC.getBlob().size) + '<br>' +
+                    'Name:' + fileName + '</i>'
             }
 
             // upload to PHP server
             if (isMyOwnDomain()) {
-                document.querySelector('#btn-upload').disabled = true;
-                document.querySelector('#btn-upload').style.display = 'none';
+                btnUpload.disabled = true;
+                btnUpload.style.display = 'none';
             } else {
-                document.querySelector('#btn-upload').disabled = false;
+                btnUpload.disabled = false;
             }
             
-            document.querySelector('#btn-upload').onclick = function(event) {
+            btnUpload.onclick = function(event) {
                 event.preventDefault()
 
                 if (isMyOwnDomain()) {
@@ -847,13 +853,13 @@
 
                         setVideoURL(fileURL);
 
-                        var html = 'Uploaded to PHP.<br>Download using below link:<br>';
-                        html += '<a href="'+fileURL+'" download="'+fileName+'" style="color: yellow; display: block; margin-top: 15px;">'+fileName+'</a>';
-                        recordingPlayer.parentNode.parentNode.querySelector('h2').innerHTML = html;
+                        recordingStatus.innerHTML = 'Uploaded<br><i>' +
+                            `<a href="${fileURL}" download="${fileName}">${fileName}</a></i>`
                         return;
                     }
+
                     button.innerHTML = progress;
-                    recordingPlayer.parentNode.parentNode.querySelector('h2').innerHTML = progress;
+                    recordingStatus.innerHTML = progress;
                 });
             };
         } // END function downloadVideo
@@ -871,7 +877,7 @@
             formData.append('video-filename', fileName);
             formData.append('video-blob', blob);
 
-            callback('Uploading recorded-file to server.');
+            callback('Uploading to server');
 
             // var upload_url = 'https://your-domain.com/files-uploader/';
             var upload_url = 'RecordRTC-to-PHP/save.php';
