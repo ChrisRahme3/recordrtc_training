@@ -8,8 +8,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/media.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
 
     <script src="node_modules/recordrtc/RecordRTC.js"></script>
     <script src="assets/js/media.js"></script>
@@ -21,60 +27,72 @@
 </head>
 
 <body>
-    <main>
-        <div class="header">
-            <label for="media-sound">Sound</label>
-            <select id="media-sound">
-                <option value="with-sound" selected>With Sound</option>
-                <option value="without-sound">Without Sound</option>
-            </select>
+    <main class="container ">
+        <form class="mb-4">
+            <div class="row">
+                <div class="col">
+                    <label for="media-sound" class="form-label">Sound</label>
+                    <select id="media-sound" class="form-select">
+                        <option value="with-sound" selected>With Sound</option>
+                        <option value="without-sound">Without Sound</option>
+                    </select>
+                </div>
 
-            <label for="media-resolution">Resolution</label>
-            <select id="media-resolution">
-                <option value="default" selected>Default</option>
-                <option value="1920x1080">1080p  </option>
-                <option value="1280x720"> 720p   </option>
-                <option value="640x480">  480p   </option>
-                <option value="3840x2160">4K     </option>
-            </select>
+                <div class="col">
+                    <label for="media-resolution" class="form-label">Resolution</label>
+                    <select id="media-resolution" class="form-select">
+                        <option value="default" selected>Default</option>
+                        <option value="1920x1080">1080p  </option>
+                        <option value="1280x720"> 720p   </option>
+                        <option value="640x480">  480p   </option>
+                        <option value="3840x2160">4K     </option>
+                    </select>
+                </div>
 
-            <label for="media-framerate">Framerate</label>
-            <select id="media-framerate">
-                <option value="default" selected>Default</option>
-                <option value="5"> 5 fps</option>
-                <option value="15">15 fps</option>
-                <option value="24">24 fps</option>
-                <option value="30">30 fps</option>
-                <option value="60">60 fps</option>
-            </select>
+                <div class="col">
+                    <label for="media-framerate" class="form-label">Framerate</label>
+                    <select id="media-framerate" class="form-select">
+                        <option value="default" selected>Default</option>
+                        <option value="5"> 5 fps</option>
+                        <option value="15">15 fps</option>
+                        <option value="24">24 fps</option>
+                        <option value="30">30 fps</option>
+                        <option value="60">60 fps</option>
+                    </select>
+                </div>
 
-            <label for="media-resolution">Bitrate</label>
-            <select id="media-bitrate">
-                <option value="default" selected>Default</option>
-                <option value="8589934592">1 GB bps     </option>
-                <option value="838860800"> 100 MB bps   </option>
-                <option value="8388608">   1 MB bps     </option>
-                <option value="819200">    100 KB bps   </option>
-                <option value="8192">      1 KB bps     </option>
-                <option value="800">       100 Bytes bps</option>
-            </select>
+                <div class="col">
+                    <label for="media-resolution" class="form-label">Bitrate</label>
+                    <select id="media-bitrate" class="form-select">
+                        <option value="default" selected>Default</option>
+                        <option value="8589934592">1 GB bps     </option>
+                        <option value="838860800"> 100 MB bps   </option>
+                        <option value="8388608">   1 MB bps     </option>
+                        <option value="819200">    100 KB bps   </option>
+                        <option value="8192">      1 KB bps     </option>
+                        <option value="800">       100 Bytes bps</option>
+                    </select>
+                </div>
 
-            <label for="media-format">Format</label>
-            <select id="media-format">
-                <option selected>Default</option>
-            </select>
-        </div>
+                <div class="col">
+                    <label for="media-format" class="form-label">Format</label>
+                    <select id="media-format" class="form-select">
+                        <option selected>Default</option>
+                    </select>
+                </div>
+            </div>
+        </form>
 
-        <div class="">
-            <button id="btn-start-recording" style="display: inline-block; font-size: 15px;">Start</button>
-        </div>
-
-        <div style="text-align: center; display: none;">
-            <button id="save-to-disk"> Download</button>
-            <button id="upload-to-php">Upload  </button>
-        </div>
-
-        <div style="margin-top: 10px;" id="recording-player">
+        <div id="playback-area">
+            <form class="mb-4 d-flex justify-content-center">
+                <button id="btn-start"    class="btn btn-success"                      >Start   </button>
+                <button id="btn-download" class="btn btn-primary" style="display: none">Download</button>
+                <button id="btn-upload"   class="btn btn-warning" style="display: none">Upload  </button>
+            </form>
+    
+            <div id="recording-player" class="d-flex justify-content-center">
+                <video id="playback-video"></video>
+            </div>
         </div>
     </main>
 
@@ -301,8 +319,6 @@
                     config.onMediaCaptured(screenStream);
 
                     addStreamStopListener(screenStream, function() {
-                        // config.onMediaStopped();
-
                         btnStart.onclick();
                     });
 
@@ -317,8 +333,6 @@
                     config.onMediaCaptured(screenStream);
 
                     addStreamStopListener(screenStream, function() {
-                        // config.onMediaStopped();
-
                         btnStart.onclick();
                     });
 
@@ -344,8 +358,6 @@
                         config.onMediaCaptured(screenStream);
 
                         addStreamStopListener(screenStream, function() {
-                            // config.onMediaStopped();
-
                             btnStart.onclick();
                         });
 
@@ -364,8 +376,6 @@
                         config.onMediaCaptured(screenStream);
 
                         addStreamStopListener(screenStream, function() {
-                            // config.onMediaStopped();
-
                             btnStart.onclick();
                         });
 
@@ -386,7 +396,7 @@
         var recordingPlayer      = media_element.media
         var recordingMedia       = document.querySelector('#media-sound')
         var mediaContainerFormat = document.querySelector('#media-format')
-        var btnStart             = document.querySelector('#btn-start-recording')
+        var btnStart             = document.querySelector('#btn-start')
 
         window.onbeforeunload = function() {
             btnStart.disabled = false
@@ -396,8 +406,11 @@
 
 
         btnStart.onclick = function(event) {
-            if (btnStart.innerHTML === 'Stop') {
+            event.preventDefault()
+            
+            if (btnStart.innerHTML === 'Stop') { // Stop button
                 btnStart.innerHTML = 'Start'
+                btnStart.classList.replace('btn-success', 'btn-danger')
 
                 function stopStream() {
                     if (btnStart.stream && btnStart.stream.stop) {
@@ -431,111 +444,111 @@
                         stopStream()
                     })
                 }
-
-                return
-            }
-
-            if (!event) return
-
-            btnStart.disabled = true
-
-            var commonConfig = {
-                onMediaCaptured: function(stream) {
-                    btnStart.stream = stream
-                    btnStart.mediaCapturedCallback()
-                    btnStart.innerHTML = 'Stop'
-                    btnStart.disabled = false
-                },
-
-                onMediaStopped: function() {
-                    btnStart.innerHTML = 'Start'
-                    btnStart.disabled = btnStart.disableStateWaiting
-                },
-
-                onMediaCapturingFailed: function(error) {
-                    console.error('onMediaCapturingFailed:', error);
-
-                    if (error.toString().indexOf('no audio or video tracks available') !== -1) {
-                        alert('RecordRTC failed to start because there are no audio or video tracks available.');
+            } else { // Start button
+                btnStart.innerHTML = 'Stop'
+                btnStart.classList.replace('btn-danger', 'btn-success')
+                if (!event) return
+    
+                btnStart.disabled = true
+    
+                var commonConfig = {
+                    onMediaCaptured: function(stream) {
+                        btnStart.stream = stream
+                        btnStart.mediaCapturedCallback()
+                        btnStart.innerHTML = 'Stop'
+                        btnStart.disabled = false
+                    },
+    
+                    onMediaStopped: function() {
+                        btnStart.innerHTML = 'Start'
+                        btnStart.disabled = btnStart.disableStateWaiting
+                    },
+    
+                    onMediaCapturingFailed: function(error) {
+                        console.error('onMediaCapturingFailed:', error);
+    
+                        if (error.toString().indexOf('no audio or video tracks available') !== -1) {
+                            alert('RecordRTC failed to start because there are no audio or video tracks available.');
+                        }
+                        
+                        if (error.name === 'PermissionDeniedError' && DetectRTC.browser.name === 'Firefox') {
+                            alert('Firefox requires version >= 52. Firefox also requires HTTPs.');
+                        }
+    
+                        commonConfig.onMediaStopped()
                     }
-                    
-                    if (error.name === 'PermissionDeniedError' && DetectRTC.browser.name === 'Firefox') {
-                        alert('Firefox requires version >= 52. Firefox also requires HTTPs.');
-                    }
-
-                    commonConfig.onMediaStopped()
-                }
-            };
-
-            const check_conditions = [mediaContainerFormat.value, mimeType, fileExtension, recorderType, type]
-            const checks = [
-                ['h264',        'video/mpeg',                   'mp4'],
-                ['h264',        'video/webm\;codecs=h264',      'mp4'],
-                ['mp4',         'video/mpeg',                   'mp4'],
-                ['mp4',         'video/webm\;codecs=h264',      'mp4'],
-                ['mkv',         'video/x-matroska;codecs=avc1', 'mkv'],
-                ['whammy',      'video/webm',                   'webm', WhammyRecorder,      'video'],
-                ['WebAssembly', 'video/webm',                   'webm', WebAssemblyRecorder, 'video'],
-                ['vp8',         'video/webm\;codecs=vp8',       'webm', null,                'video'],
-                ['vp9',         'video/webm\;codecs=vp9',       'webm', null,                'video'],
-                ['default',     'video/webm',                   'webm', null,                'video'],
-                ['gif',         'image/gif',                    'gif',  GifRecorder,         'gif'  ],
-                ['pcm',         'audio/wav',                    'wav',  StereoAudioRecorder, 'audio'],
-                ['opus',        'audio/webm',                   'webm', null,                'audio'],
-                ['opus',        'audio/ogg; codecs=opus',       'ogg',  null,                'audio'],
-                ['ogg',         'audio/webm',                   'webm', null,                'audio'],
-                ['ogg',         'audio/ogg; codecs=opus',       'ogg',  null,                'audio'],
-            ]
-
-            checks.forEach(function (check) {
-                if (mediaContainerFormat.value === check[0] && isMimeTypeSupported(check[1])) {
-                    console.log('>>>>>>>>>', mediaContainerFormat.value, check[3])
-                    if (check.length > 1) mimeType      = check[1]
-                    if (check.length > 2) fileExtension = check[2]
-                    if (check.length > 3) recorderType  = check[3]
-                    if (check.length > 4) type          = check[4]
-                }
-            })
-
-            console.log('ext', mediaContainerFormat.value, fileExtension)
-
-            if (recordingMedia.value === 'without-sound') {
-                captureScreen(commonConfig);
-            } else if (recordingMedia.value === 'with-sound') {
-                captureAudioPlusScreen(commonConfig);
-            }
-
-            btnStart.mediaCapturedCallback = function () {
-                var options = {
-                    type: type,
-                    mimeType: mimeType,
-                    disableLogs: params.disableLogs || false,
-                    getNativeBlob: true, // enable it for longer recordings,
-                    ignoreMutedMedia: true,
-                    video: recordingPlayer
                 };
-
-                if (recorderType) {
-                    options.recorderType = recorderType;
-
-                    if (recorderType == WhammyRecorder || recorderType == GifRecorder || recorderType == WebAssemblyRecorder) {
-                        options.canvas = options.video = {
-                            width: defaultWidth || 320,
-                            height: defaultHeight || 240
+    
+                const check_conditions = [mediaContainerFormat.value, mimeType, fileExtension, recorderType, type]
+                const checks = [
+                    ['h264',        'video/mpeg',                   'mp4'],
+                    ['h264',        'video/webm\;codecs=h264',      'mp4'],
+                    ['mp4',         'video/mpeg',                   'mp4'],
+                    ['mp4',         'video/webm\;codecs=h264',      'mp4'],
+                    ['mkv',         'video/x-matroska;codecs=avc1', 'mkv'],
+                    ['whammy',      'video/webm',                   'webm', WhammyRecorder,      'video'],
+                    ['WebAssembly', 'video/webm',                   'webm', WebAssemblyRecorder, 'video'],
+                    ['vp8',         'video/webm\;codecs=vp8',       'webm', null,                'video'],
+                    ['vp9',         'video/webm\;codecs=vp9',       'webm', null,                'video'],
+                    ['default',     'video/webm',                   'webm', null,                'video'],
+                    ['gif',         'image/gif',                    'gif',  GifRecorder,         'gif'  ],
+                    ['pcm',         'audio/wav',                    'wav',  StereoAudioRecorder, 'audio'],
+                    ['opus',        'audio/webm',                   'webm', null,                'audio'],
+                    ['opus',        'audio/ogg; codecs=opus',       'ogg',  null,                'audio'],
+                    ['ogg',         'audio/webm',                   'webm', null,                'audio'],
+                    ['ogg',         'audio/ogg; codecs=opus',       'ogg',  null,                'audio'],
+                ]
+    
+                checks.forEach(function (check) {
+                    if (mediaContainerFormat.value === check[0] && isMimeTypeSupported(check[1])) {
+                        console.log('>>>>>>>>>', mediaContainerFormat.value, check[3])
+                        if (check.length > 1) mimeType      = check[1]
+                        if (check.length > 2) fileExtension = check[2]
+                        if (check.length > 3) recorderType  = check[3]
+                        if (check.length > 4) type          = check[4]
+                    }
+                })
+    
+                console.log('ext', mediaContainerFormat.value, fileExtension)
+    
+                if (recordingMedia.value === 'without-sound') {
+                    captureScreen(commonConfig);
+                } else if (recordingMedia.value === 'with-sound') {
+                    captureAudioPlusScreen(commonConfig);
+                }
+    
+                btnStart.mediaCapturedCallback = function () {
+                    var options = {
+                        type: type,
+                        mimeType: mimeType,
+                        disableLogs: params.disableLogs || false,
+                        getNativeBlob: true, // enable it for longer recordings,
+                        ignoreMutedMedia: true,
+                        video: recordingPlayer
+                    };
+    
+                    if (recorderType) {
+                        options.recorderType = recorderType;
+    
+                        if (recorderType == WhammyRecorder || recorderType == GifRecorder || recorderType == WebAssemblyRecorder) {
+                            options.canvas = options.video = {
+                                width: defaultWidth || 320,
+                                height: defaultHeight || 240
+                            }
                         }
                     }
+    
+                    if (media_bitrate) {
+                        options.media_bitrate = media_bitrate;
+                    }
+    
+                    btnStart.recordingEndedCallback = function(url) {
+                        setVideoURL(url)
+                    }
+    
+                    btnStart.recordRTC = RecordRTC(btnStart.stream, options)
+                    btnStart.recordRTC.startRecording()
                 }
-
-                if (media_bitrate) {
-                    options.media_bitrate = media_bitrate;
-                }
-
-                btnStart.recordingEndedCallback = function(url) {
-                    setVideoURL(url)
-                }
-
-                btnStart.recordRTC = RecordRTC(btnStart.stream, options)
-                btnStart.recordRTC.startRecording()
             }
         } // END btnStart.onclick
 
@@ -770,8 +783,12 @@
 
             var fileName = makeFileName(fileExtension);
 
-            document.querySelector('#save-to-disk').parentNode.style.display = 'block'
-            document.querySelector('#save-to-disk').onclick = function() {
+            document.querySelector('#btn-download').style.display = ''
+            document.querySelector('#btn-upload').style.display = ''
+
+            document.querySelector('#btn-download').onclick = function(event) {
+                event.preventDefault()
+
                 if (!recordRTC) return alert('No recording found.')
 
                 var file = new File(
@@ -785,13 +802,15 @@
 
             // upload to PHP server
             if (isMyOwnDomain()) {
-                document.querySelector('#upload-to-php').disabled = true;
-                document.querySelector('#upload-to-php').style.display = 'none';
+                document.querySelector('#btn-upload').disabled = true;
+                document.querySelector('#btn-upload').style.display = 'none';
             } else {
-                document.querySelector('#upload-to-php').disabled = false;
+                document.querySelector('#btn-upload').disabled = false;
             }
             
-            document.querySelector('#upload-to-php').onclick = function() {
+            document.querySelector('#btn-upload').onclick = function(event) {
+                event.preventDefault()
+
                 if (isMyOwnDomain()) {
                     alert('PHP Upload is not available on this domain.');
                     return;
@@ -807,7 +826,8 @@
                     if (progress === 'ended') {
                         button.disabled = false;
                         button.innerHTML = 'Click to download from server';
-                        button.onclick = function() {
+                        button.onclick = function(event) {
+                            event.preventDefault()
                             saveUrlToDisk(fileURL, fileName);
                         };
 
@@ -905,7 +925,8 @@
             var doc = (document.body || document.documentElement)
             doc.appendChild(hyperlink)
 
-            hyperlink.onclick = function() {
+            hyperlink.onclick = function(event) {
+                event.preventDefault()
                 doc.removeChild(hyperlink)
                 window.URL.revokeObjectURL(hyperlink.href)
             }

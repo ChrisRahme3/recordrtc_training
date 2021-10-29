@@ -7,7 +7,6 @@ body {
 
 main {
     display: block;
-    text-align: center;
     padding-top: 0;
 }
 
@@ -26,4 +25,11 @@ main option[disabled] {
 
 main select {
     font-size: 17px;
+}
+
+
+
+#playback-area > form > button {
+    width: 7.5vw;
+    margin: auto 1.5rem;
 }
