@@ -1,9 +1,3 @@
-<!--
-> Muaz Khan     - www.MuazKhan.com
-> MIT License   - www.WebRTC-Experiment.com/licence
-> Documentation - github.com/muaz-khan/RecordRTC
-> and           - RecordRTC.org
--->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -28,22 +22,15 @@
 
 <body>
     <main>
-        <h2 class="header" style="margin: 0;">
-            <select class="recording-media">
+        <div class="header">
+            <label for="media-sound">Sound</label>
+            <select id="media-sound">
                 <option value="with-sound" selected>With Sound</option>
                 <option value="without-sound">Without Sound</option>
             </select>
 
-            <div class="">
-                <button id="btn-start-recording" style="display: inline-block; font-size: 15px;">Start</button>
-            </div>
-
-            <div class="hidden">
-                <input type="checkbox" id="chk-fixSeeking" style="margin:0;width:auto;" title="Fix video seeking issues?">
-                <label for="chk-fixSeeking" style="font-size: 15px;margin:0;width: auto;cursor: pointer;-webkit-user-select:none;user-select:none;" title="Fix video seeking issues?">Fix Seeking Issues?</label>
-            </div>
-
-            <select class="media-resolutions">
+            <label for="media-resolution">Resolution</label>
+            <select id="media-resolution">
                 <option value="default" selected>Default</option>
                 <option value="1920x1080">1080p  </option>
                 <option value="1280x720"> 720p   </option>
@@ -51,7 +38,8 @@
                 <option value="3840x2160">4K     </option>
             </select>
 
-            <select class="media-framerates">
+            <label for="media-framerate">Framerate</label>
+            <select id="media-framerate">
                 <option value="default" selected>Default</option>
                 <option value="5"> 5 fps</option>
                 <option value="15">15 fps</option>
@@ -60,7 +48,8 @@
                 <option value="60">60 fps</option>
             </select>
 
-            <select class="media-bitrates">
+            <label for="media-resolution">Bitrate</label>
+            <select id="media-bitrate">
                 <option value="default" selected>Default</option>
                 <option value="8589934592">1 GB bps     </option>
                 <option value="838860800"> 100 MB bps   </option>
@@ -70,10 +59,15 @@
                 <option value="800">       100 Bytes bps</option>
             </select>
 
-            <select class="media-container-format">
+            <label for="media-format">Format</label>
+            <select id="media-format">
                 <option selected>Default</option>
             </select>
-        </h2>
+        </div>
+
+        <div class="">
+            <button id="btn-start-recording" style="display: inline-block; font-size: 15px;">Start</button>
+        </div>
 
         <div style="text-align: center; display: none;">
             <button id="save-to-disk"> Download</button>
@@ -95,7 +89,7 @@
         var defaultWidth
         var defaultHeight
 
-        var videoBitsPerSecond
+        var media_bitrate
     </script>
 
     <script> // Helper functions
@@ -212,7 +206,7 @@
                 mimeType: ${mediaRecorder.mimeType},
                 state: ${mediaRecorder.state},
                 audioBitsPerSecond: ${mediaRecorder.audioBitsPerSecond},
-                videoBitsPerSecond: ${mediaRecorder.videoBitsPerSecond}`
+                media_bitrate: ${mediaRecorder.media_bitrate}`
 
             if (mediaRecorder.stream) {
                 result += `,
@@ -222,6 +216,17 @@
 
             return result
         } // END function mediaRecorderToStringify
+    
+    
+        function getURL(arg) {
+            if (arg instanceof Blob || arg instanceof File) {
+                return URL.createObjectURL(arg);
+            } else if (arg instanceof RecordRTC || arg.getBlob) {
+                return URL.createObjectURL(arg.getBlob());
+            } else {
+                return arg
+            }
+        } // END function getURL
     </script>
 
     <script> // Creating HTML Elements
@@ -269,6 +274,22 @@
 
             setMediaContainerFormat(filetype_options)
         }
+    
+    
+        function setGetFromLocalStorage(selectors) {
+            selectors.forEach(function(selector) {
+                var storageItem = selector.replace(/\.|#/g, '');
+
+                if (localStorage.getItem(storageItem)) {
+                    document.querySelector(selector).value = localStorage.getItem(storageItem);
+                }
+
+                addEventListenerToUploadLocalStorageItem(selector, ['change', 'blur'], function() {
+                    localStorage.setItem(storageItem, document.querySelector(selector).value);
+                })
+            })
+        } // END function setGetFromLocalStorage
+
     </script>
 
     <script> // Capture Functions
@@ -363,8 +384,8 @@
     
     <script>
         var recordingPlayer      = media_element.media
-        var recordingMedia       = document.querySelector('.recording-media')
-        var mediaContainerFormat = document.querySelector('.media-container-format')
+        var recordingMedia       = document.querySelector('#media-sound')
+        var mediaContainerFormat = document.querySelector('#media-format')
         var btnStart             = document.querySelector('#btn-start-recording')
 
         window.onbeforeunload = function() {
@@ -384,7 +405,7 @@
                         btnStart.stream = null
                     }
 
-                    videoBitsPerSecond = null
+                    media_bitrate = null
                     recordingPlayer.parentNode.parentNode.querySelector('h2').innerHTML = 'Recording stopped' +
                         '<br>Size: ' + formatBytes(btnStart.recordRTC.getBlob().size)
                 }
@@ -468,12 +489,15 @@
 
             checks.forEach(function (check) {
                 if (mediaContainerFormat.value === check[0] && isMimeTypeSupported(check[1])) {
+                    console.log('>>>>>>>>>', mediaContainerFormat.value, check[3])
                     if (check.length > 1) mimeType      = check[1]
                     if (check.length > 2) fileExtension = check[2]
-                    if (check.length > 3) fileExtension = check[3]
+                    if (check.length > 3) recorderType  = check[3]
                     if (check.length > 4) type          = check[4]
                 }
             })
+
+            console.log('ext', mediaContainerFormat.value, fileExtension)
 
             if (recordingMedia.value === 'without-sound') {
                 captureScreen(commonConfig);
@@ -502,8 +526,8 @@
                     }
                 }
 
-                if (videoBitsPerSecond) {
-                    options.videoBitsPerSecond = videoBitsPerSecond;
+                if (media_bitrate) {
+                    options.media_bitrate = media_bitrate;
                 }
 
                 btnStart.recordingEndedCallback = function(url) {
@@ -516,21 +540,17 @@
         } // END btnStart.onclick
 
 
-        function setVideoBitrates() {
-            var select = document.querySelector('.media-bitrates');
+        function setBitrate() {
+            var select = document.querySelector('#media-bitrate');
             var value = select.value;
 
-            if (value == 'default') {
-                videoBitsPerSecond = null;
-                return;
-            }
-
-            videoBitsPerSecond = parseInt(value);
-        } // END function setVideoBitrates
+            media_bitrate = (value == 'default') ? null
+                : parseInt(value)
+        } // END function setBitrate
 
 
         function getFrameRates(mediaConstraints) {
-            var select = document.querySelector('.media-framerates')
+            var select = document.querySelector('#media-framerate')
             var value = select.value
 
             if (!!mediaConstraints.video || value == 'default') return mediaConstraints
@@ -557,19 +577,6 @@
         } // END function getFrameRates
 
 
-        function setGetFromLocalStorage(selectors) {
-            selectors.forEach(function(selector) {
-                var storageItem = selector.replace(/\.|#/g, '');
-
-                if (localStorage.getItem(storageItem)) {
-                    document.querySelector(selector).value = localStorage.getItem(storageItem);
-                }
-
-                addEventListenerToUploadLocalStorageItem(selector, ['change', 'blur'], function() {
-                    localStorage.setItem(storageItem, document.querySelector(selector).value);
-                })
-            })
-        } // END function setGetFromLocalStorage
 
 
         function addEventListenerToUploadLocalStorageItem(selector, arr, callback) {
@@ -579,13 +586,8 @@
         } // END function addEventListenerToUploadLocalStorageItem
 
 
-        setGetFromLocalStorage(
-            ['.media-resolutions', '.media-framerates', '.media-bitrates', '.recording-media', '.media-container-format']
-        )
-
-
         function getVideoResolutions(mediaConstraints) {
-            var select = document.querySelector('.media-resolutions');
+            var select = document.querySelector('#media-resolution');
             var value = select.value;
 
             if (!mediaConstraints.video || value == 'default') return mediaConstraints
@@ -624,7 +626,7 @@
                 mediaConstraints.video = {}
             }
 
-            setVideoBitrates()
+            setBitrate()
 
             mediaConstraints = getVideoResolutions(mediaConstraints)
             mediaConstraints = getFrameRates(mediaConstraints)
@@ -652,7 +654,7 @@
                 mediaContainerFormat.querySelectorAll('option')
             )
 
-            var localStorageItem = localStorage.getItem('media-container-format')
+            var localStorageItem = localStorage.getItem('media-format')
 
             supported_options.forEach(function (option) {
                 var op = document.createElement('option')
@@ -669,6 +671,10 @@
         
 
         initFormats()
+
+        setGetFromLocalStorage(
+            ['#media-resolution', '#media-framerate', '#media-bitrate', '#media-sound', '#media-format']
+        )
 
 
         if (typeof MediaRecorder === 'undefined' && (DetectRTC.browser.name === 'Edge' || DetectRTC.browser.name === 'Safari')) {
@@ -914,19 +920,7 @@
         } // END function saveUrlToDisk
 
 
-        function getURL(arg) {
-            if (arg instanceof Blob || arg instanceof File) {
-                return URL.createObjectURL(arg);
-            } else if (arg instanceof RecordRTC || arg.getBlob) {
-                return URL.createObjectURL(arg.getBlob());
-            } else {
-                return arg
-            }
-        } // END function getURL
-
-
         function setVideoURL(arg, forceNonImage) {
-            console.log('arg', arg)
             var parentNode = recordingPlayer.parentNode
             parentNode.removeChild(recordingPlayer)
             parentNode.innerHTML = ''
@@ -964,167 +958,6 @@
         } // END function setVideoURL
     </script>
 
-    <script>
-        /* cors_upload.js Copyright 2015 Google Inc. All Rights Reserved. */
-
-        var DRIVE_UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v2/files/';
-
-        var RetryHandler = function() {
-            this.interval = 1000; // Start at one second
-            this.maxInterval = 60 * 1000; // Don't wait longer than a minute 
-        };
-
-        RetryHandler.prototype.retry = function(fn) {
-            setTimeout(fn, this.interval);
-            this.interval = this.nextInterval_();
-        };
-
-        RetryHandler.prototype.reset = function() {
-            this.interval = 1000;
-        };
-
-        RetryHandler.prototype.nextInterval_ = function() {
-            var interval = this.interval * 2 + this.getRandomInt_(0, 1000);
-            return Math.min(interval, this.maxInterval);
-        };
-
-        RetryHandler.prototype.getRandomInt_ = function(min, max) {
-            return Math.floor(Math.random() * (max - min + 1) + min);
-        };
-
-        var MediaUploader = function(options) {
-            var noop = function() {};
-            this.file = options.file;
-            this.contentType = options.contentType || this.file.type || 'application/octet-stream';
-            this.metadata = options.metadata || {
-            'title': this.file.name,
-            'mimeType': this.contentType
-            };
-            this.token = options.token;
-            this.onComplete = options.onComplete || noop;
-            this.onProgress = options.onProgress || noop;
-            this.onError = options.onError || noop;
-            this.offset = options.offset || 0;
-            this.chunkSize = options.chunkSize || 0;
-            this.retryHandler = new RetryHandler();
-
-            this.url = options.url;
-            if (!this.url) {
-            var params = options.params || {};
-            params.uploadType = 'resumable';
-            this.url = this.buildUrl_(options.fileId, params, options.baseUrl);
-            }
-            this.httpMethod = options.fileId ? 'PUT' : 'POST';
-        };
-
-        MediaUploader.prototype.upload = function() {
-            var self = this;
-            var xhr = new XMLHttpRequest();
-
-            xhr.open(this.httpMethod, this.url, true);
-            xhr.setRequestHeader('Authorization', 'Bearer ' + this.token);
-            xhr.setRequestHeader('Content-Type', 'application/json');
-            xhr.setRequestHeader('X-Upload-Content-Length', this.file.size);
-            xhr.setRequestHeader('X-Upload-Content-Type', this.contentType);
-
-            xhr.onload = function(e) {
-            if (e.target.status < 400) {
-                var location = e.target.getResponseHeader('Location');
-                this.url = location;
-                this.sendFile_();
-            } else {
-                this.onUploadError_(e);
-            }
-            }.bind(this);
-            xhr.onerror = this.onUploadError_.bind(this);
-            xhr.send(JSON.stringify(this.metadata));
-        };
-
-        MediaUploader.prototype.sendFile_ = function() {
-            var content = this.file;
-            var end = this.file.size;
-
-            if (this.offset || this.chunkSize) {
-            // Only bother to slice the file if we're either resuming or uploading in chunks
-            if (this.chunkSize) {
-                end = Math.min(this.offset + this.chunkSize, this.file.size);
-            }
-            content = content.slice(this.offset, end);
-            }
-
-            var xhr = new XMLHttpRequest();
-            xhr.open('PUT', this.url, true);
-            xhr.setRequestHeader('Content-Type', this.contentType);
-            xhr.setRequestHeader('Content-Range', 'bytes ' + this.offset + '-' + (end - 1) + '/' + this.file.size);
-            xhr.setRequestHeader('X-Upload-Content-Type', this.file.type);
-            if (xhr.upload) {
-            xhr.upload.addEventListener('progress', this.onProgress);
-            }
-            xhr.onload = this.onContentUploadSuccess_.bind(this);
-            xhr.onerror = this.onContentUploadError_.bind(this);
-            xhr.send(content);
-        };
-
-        MediaUploader.prototype.resume_ = function() {
-            var xhr = new XMLHttpRequest();
-            xhr.open('PUT', this.url, true);
-            xhr.setRequestHeader('Content-Range', 'bytes */' + this.file.size);
-            xhr.setRequestHeader('X-Upload-Content-Type', this.file.type);
-            if (xhr.upload) {
-            xhr.upload.addEventListener('progress', this.onProgress);
-            }
-            xhr.onload = this.onContentUploadSuccess_.bind(this);
-            xhr.onerror = this.onContentUploadError_.bind(this);
-            xhr.send();
-        };
-
-        MediaUploader.prototype.extractRange_ = function(xhr) {
-            var range = xhr.getResponseHeader('Range');
-            if (range) {
-            this.offset = parseInt(range.match(/\d+/g).pop(), 10) + 1;
-            }
-        };
-
-        MediaUploader.prototype.onContentUploadSuccess_ = function(e) {
-            if (e.target.status == 200 || e.target.status == 201) {
-            this.onComplete(e.target.response);
-            } else if (e.target.status == 308) {
-            this.extractRange_(e.target);
-            this.retryHandler.reset();
-            this.sendFile_();
-            }
-        };
-
-        MediaUploader.prototype.onContentUploadError_ = function(e) {
-            if (e.target.status && e.target.status < 500) {
-            this.onError(e.target.response);
-            } else {
-            this.retryHandler.retry(this.resume_.bind(this));
-            }
-        };
-
-        MediaUploader.prototype.onUploadError_ = function(e) {
-            this.onError(e.target.response); // TODO - Retries for initial upload
-        };
-
-        MediaUploader.prototype.buildQuery_ = function(params) {
-            params = params || {};
-            return Object.keys(params).map(function(key) {
-            return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
-            }).join('&');
-        };
-
-        MediaUploader.prototype.buildUrl_ = function(id, params, baseUrl) {
-            var url = baseUrl || DRIVE_UPLOAD_URL;
-            if (id) {
-            url += id;
-            }
-            var query = this.buildQuery_(params);
-            if (query) {
-            url += '?' + query;
-            }
-            return url;
-        };
-    </script>
+    <script src="assets/js/cors_upload.js"></script>
 </body>
 </html>
