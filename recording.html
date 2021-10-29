@@ -85,13 +85,22 @@
             </div>
         </form>
 
-        <div id="playback-area">
-            <div id="recording-player" class="mb-5 d-flex justify-content-center"></div>
+        <div id="playback-area" class="row">
+            <div id="recording-player" class="col-9"></div>
 
-            <form class="d-flex justify-content-center">
-                <button id="btn-start"    class="btn btn-success"                      >Start   </button>
-                <button id="btn-download" class="btn btn-primary" style="display: none">Download</button>
-                <button id="btn-upload"   class="btn btn-warning" style="display: none">Upload  </button>
+            <div id="recording-info" class="col-3">
+                <div id="recording-control">
+                    <button id="btn-start"    class="btn btn-success"                      >Start   </button>
+                    <button id="btn-download" class="btn btn-primary">Download</button>
+                    <button id="btn-upload"   class="btn btn-warning">Upload  </button>
+                    <!-- <button id="btn-download" class="btn btn-primary" style="display: none">Download</button> -->
+                    <!-- <button id="btn-upload"   class="btn btn-warning" style="display: none">Upload  </button> -->
+                </div>
+
+                <div id="recording-feedback form-control" class="mt-4">
+                    <h6>Recording Status:</h6>
+                    <p id="recording-status" class="form-control">Inactive</p>
+                </div>
             </form>
         </div>
     </main>
@@ -391,7 +400,7 @@
         }
     </script>
     
-    <script>
+    <script> // Main
         var recordingPlayer      = media_element.media
         var recordingMedia       = document.querySelector('#media-sound')
         var mediaContainerFormat = document.querySelector('#media-format')
