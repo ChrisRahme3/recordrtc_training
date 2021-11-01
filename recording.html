@@ -18,7 +18,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
 
     <script src="node_modules/recordrtc/RecordRTC.js"></script>
+    <script src="assets/js/helpers.js"></script>
     <script src="assets/js/media.js"></script>
+    <script src="assets/js/recording-db.js"></script>
     
     <script src="https://unpkg.com/@mattiasbuelens/web-streams-polyfill/dist/polyfill.min.js"></script>
     <script src="https://www.webrtc-experiment.com/EBML.js"></script>
@@ -85,7 +87,7 @@
             </div>
         </form>
 
-        <div id="playback-area" class="row">
+        <div id="playback-area" class="row mb-5">
             <div id="recording-player" class="col-9"></div>
 
             <div id="recording-info" class="col-3">
@@ -101,8 +103,10 @@
                     <h6>Recording Status:</h6>
                     <p id="recording-status" class="form-control">Inactive</p>
                 </div>
-            </form>
+            </div>
         </div>
+
+        <div id="playback-history" class="row"></div>
     </main>
 
     <script> // Global variables
@@ -115,8 +119,8 @@
         var recording
 
         var recorderType
-        var defaultWidth
-        var defaultHeight
+        var defaultWidth  = 1920
+        var defaultHeight = 1080
 
         var media_bitrate
     </script>
@@ -133,27 +137,15 @@
             var match, search = window.location.search
 
             while (match = regex.exec(search.substring(1))) {
-                params[d(match[1])] = d(match[2]);
+                params[d(match[1])] = d(match[2])
 
                 if (d(match[2]) === 'true' || d(match[2]) === 'false') {
                     params[d(match[1])] = (d(match[2]) === 'true')
                 }
             }
 
-            window.params = params;
+            window.params = params
         })()
-
-
-        function formatBytes(bytes, decimals = 2, k = 1024) {
-            if (bytes == 0) return "0 Bytes"
-
-            let sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
-
-            let d = Math.floor(Math.log(bytes) / Math.log(k))
-            let c = parseFloat((bytes / Math.pow(k, d)).toFixed(Math.max(0, decimals)))
-
-            return `${c} ${sizes[d]}`
-        }
 
 
         function stringify(obj) {
@@ -175,24 +167,24 @@
 
         function addStreamStopListener(stream, callback) {
             stream.addEventListener('ended', function() {
-                callback();
-                callback = function() {};
+                callback()
+                callback = function() {}
             }, false)
 
             stream.addEventListener('inactive', function() {
-                callback();
-                callback = function() {};
+                callback()
+                callback = function() {}
             }, false)
 
             stream.getTracks().forEach(function(track) {
                 track.addEventListener('ended', function() {
-                    callback();
-                    callback = function() {};
+                    callback()
+                    callback = function() {}
                 }, false)
 
                 track.addEventListener('inactive', function() {
-                    callback();
-                    callback = function() {};
+                    callback()
+                    callback = function() {}
                 }, false)
             })
         }
@@ -207,26 +199,17 @@
                 return true
             }
 
-            return MediaRecorder.isTypeSupported(mimeType);
+            return MediaRecorder.isTypeSupported(mimeType)
         } // END function isMimeTypeSupported
     
 
-        function makeFileName(fileExtension) {
-            var d = new Date().toISOString()
-                .replace(/:/g, '-').replace(/\./g, '-')
-                .replace(/T/g, '_').replace(/Z/g, '')
-
-            return `ScreenRecord_${d}.${fileExtension}`
-        } // END function makeFileName
-    
-    
         function isMyOwnDomain() {
-            return document.domain.indexOf(MY_DOMAIN) !== -1;
+            return document.domain.indexOf(MY_DOMAIN) !== -1
         } // END function isMyOwnDomain
 
 
         function isLocalHost() {
-            return document.domain === 'localhost' || document.domain === '127.0.0.1';
+            return document.domain === 'localhost' || document.domain === '127.0.0.1'
         } // END function isLocalHost
 
 
@@ -249,9 +232,9 @@
     
         function getURL(arg) {
             if (arg instanceof Blob || arg instanceof File) {
-                return URL.createObjectURL(arg);
+                return URL.createObjectURL(arg)
             } else if (arg instanceof RecordRTC || arg.getBlob) {
-                return URL.createObjectURL(arg.getBlob());
+                return URL.createObjectURL(arg.getBlob())
             } else {
                 return arg
             }
@@ -306,17 +289,34 @@
     
         function setGetFromLocalStorage(selectors) {
             selectors.forEach(function(selector) {
-                var storageItem = selector.replace(/\.|#/g, '');
+                var storageItem = selector.replace(/\.|#/g, '')
 
                 if (localStorage.getItem(storageItem)) {
-                    document.querySelector(selector).value = localStorage.getItem(storageItem);
+                    document.querySelector(selector).value = localStorage.getItem(storageItem)
                 }
 
-                addEventListenerToUploadLocalStorageItem(selector, ['change', 'blur'], function() {
-                    localStorage.setItem(storageItem, document.querySelector(selector).value);
+                // addEventListenerToUploadLocalStorageItem(selector, ['change', 'blur'], function() {
+                //     localStorage.setItem(storageItem, document.querySelector(selector).value)
+                // })
+
+                var arr = ['change', 'blur']
+
+                arr.forEach(function (event) {
+                    document.querySelector(selector).addEventListener(
+                        event,
+                        function() {  localStorage.setItem(storageItem, document.querySelector(selector).value) },
+                        false
+                    )
                 })
             })
         } // END function setGetFromLocalStorage
+    
+        
+        // function addEventListenerToUploadLocalStorageItem(selector, arr, callback) {
+        //     arr.forEach(function(event) {
+        //         document.querySelector(selector).addEventListener(event, callback, false)
+        //     })
+        // } // END function addEventListenerToUploadLocalStorageItem
     </script>
 
     <script> // HTML variables
@@ -330,88 +330,81 @@
     </script>
 
     <script> // Capture Functions
-        function captureScreen(config) {
+        function capture(config, mic = true) {
+            function commonThen(config, screenStream) {
+                config.onMediaCaptured(screenStream)
+
+                addStreamStopListener(screenStream, function() {
+                    btnStart.onclick()
+                })
+
+                setVideoURL(screenStream, true)
+            } // END subfunction commonThen
+
+
+            function commonCatch(config, error) {
+                if (error && (error.name === 'ConstraintNotSatisfiedError' || error.name === 'OverconstrainedError')) {
+                    alert('Your browser does not support the selected resolution or frame-rates. \n\nPlease select "default".')
+                } else if (error && error.message) {
+                    alert(error.message)
+                } else {
+                    alert('Unable to make getUserMedia request. Please check browser console logs.')
+                }
+
+                config.onMediaCapturingFailed(error)
+            }
+
+
+            function commonAll(navi) {
+                mediaConstraints = {video: {}}
+                mediaConstraints = getVideoResolutions(mediaConstraints)
+                mediaConstraints = getFrameRates(mediaConstraints)
+                console.log('Constraints After:', mediaConstraints)
+
+                navi.getDisplayMedia(
+                    mediaConstraints
+                ).then(screenStream => {
+                    if (mic) {
+                        navigator.mediaDevices.getUserMedia({
+                            audio:true
+                        }).then(function(mic) {
+                            screenStream.addTrack(mic.getTracks()[0])
+                            commonThen(config, screenStream)
+                        }).catch(function(error) {
+                            commonCatch(config, error)
+                        })
+                    } else {
+                        commonThen(config, screenStream)
+                    }
+                }).catch(function(error) {
+                    commonCatch(config, error)
+                })
+            } // END subfunction commonAll
+
+
             if (navigator.getDisplayMedia) {
-                navigator.getDisplayMedia({
-                    video: true
-                }).then(screenStream => {
-                    config.onMediaCaptured(screenStream);
-
-                    addStreamStopListener(screenStream, function() {
-                        btnStart.onclick();
-                    });
-
-                    setVideoURL(screenStream, true);
-                }).catch(function(error) {
-                    config.onMediaCapturingFailed(error);
-                });
+                commonAll(navigator)
             } else if (navigator.mediaDevices.getDisplayMedia) {
-                navigator.mediaDevices.getDisplayMedia({
-                    video: true
-                }).then(screenStream => {
-                    config.onMediaCaptured(screenStream);
-
-                    addStreamStopListener(screenStream, function() {
-                        btnStart.onclick();
-                    });
-
-                    setVideoURL(screenStream, true);
-                }).catch(function(error) {
-                    config.onMediaCapturingFailed(error);
-                });
+                commonAll(navigator.mediaDevices)
             } else {
-                var error = 'getDisplayMedia API are not supported in this browser.';
-                config.onMediaCapturingFailed(error);
-                alert(error);
+                var error = 'getDisplayMedia API is not supported in this browser.'
+                config.onMediaCapturingFailed(error)
+                alert(error)
             }
         }
+        
+        
+        function captureScreen(config) {
+            capture(config, false)
+        }
+
 
         function captureAudioPlusScreen(config) {
-            if (navigator.getDisplayMedia) {
-                navigator.getDisplayMedia({
-                    video: true
-                }).then(screenStream => {
-                    navigator.mediaDevices.getUserMedia({audio:true}).then(function(mic) {
-                        screenStream.addTrack(mic.getTracks()[0]);
-
-                        config.onMediaCaptured(screenStream);
-
-                        addStreamStopListener(screenStream, function() {
-                            btnStart.onclick();
-                        });
-
-                        setVideoURL(screenStream, true);
-                    });
-                }).catch(function(error) {
-                    config.onMediaCapturingFailed(error);
-                });
-            } else if (navigator.mediaDevices.getDisplayMedia) {
-                navigator.mediaDevices.getDisplayMedia({
-                    video: true
-                }).then(screenStream => {
-                    navigator.mediaDevices.getUserMedia({audio:true}).then(function(mic) {
-                        screenStream.addTrack(mic.getTracks()[0]);
-
-                        config.onMediaCaptured(screenStream);
-
-                        addStreamStopListener(screenStream, function() {
-                            btnStart.onclick();
-                        });
-
-                        setVideoURL(screenStream, true);
-                    });
-                }).catch(function(error) {
-                    config.onMediaCapturingFailed(error);
-                });
-            } else {
-                var error = 'getDisplayMedia API are not supported in this browser.';
-                config.onMediaCapturingFailed(error);
-                alert(error);
-            }
+            capture(config, true)
         }
     </script>
     
-    <script> // Main
+    <script> // Initialization
         window.onbeforeunload = function() {
             btnStart.disabled = false
             recordingMedia.disabled = false
@@ -423,50 +416,89 @@
             event.preventDefault()
             
             if (btnStart.innerHTML === 'Stop') { // Stop button
-                btnStart.innerHTML = 'Start'
-                btnStart.classList.replace('btn-danger', 'btn-success')
-
-                function stopStream() {
-                    if (btnStart.stream && btnStart.stream.stop) {
-                        btnStart.stream.stop()
-                        btnStart.stream = null
-                    }
-
-                    media_bitrate = null
-                    recordingStatus.innerHTML = 'Stopped<br><i>' +
-                        'Size: ' + formatBytes(recording.getBlob().size) + '</i>'
-                }
-
-                if (recording) {
-                    recording.stopRecording(function(url) {
-                        if (btnStart.blobs && btnStart.blobs.length) {
-                            const blob = new File(
-                                btnStart.blobs,
-                                makeFileName(fileExtension),
-                                {type: mimeType}
-                            )
-                            
-                            recording.getBlob = function() {
-                                return blob
-                            }
-
-                            url = URL.createObjectURL(blob)
-                        }
-
-                        btnStart.recordingEndedCallback(url)
-                        downloadVideo(recording)
-                        stopStream()
-                    })
-                }
-
-                return
+                stopRecording()
+            } else {
+                if (!event) return
+                startRecording()
             }
-            
-            btnStart.innerHTML = 'Stop'
-            // btnStart.classList.replace('btn-success', 'btn-danger')
+        } // END btnStart.onclick
 
-            if (!event) return
+
+        readTable()
+
+        setInterval(function () {
+            readTable()
+        }, 3000)
+    </script>
+
+
+    <script> // Video Formatting Data
+        function setBitrate() {
+            var select = document.querySelector('#media-bitrate')
+            var value = select.value
+
+            media_bitrate = (value == 'default') ? null
+                : parseInt(value)
+        } // END function setBitrate
+
+
+        function getFrameRates(mediaConstraints) {
+            var select = document.querySelector('#media-framerate')
+            var value = select.value
             
+            if (!mediaConstraints.video || value == 'default') return mediaConstraints
+            
+            value = parseInt(value)
+            
+            if (DetectRTC.browser.name === 'Firefox') {
+                mediaConstraints.video.frameRate = value
+                return mediaConstraints
+            }
+
+            if (!mediaConstraints.video.mandatory) {
+                mediaConstraints.video.mandatory = {}
+                mediaConstraints.video.optional = []
+            }
+
+            mediaConstraints.video.mandatory.maxFrameRate = value
+
+            return mediaConstraints
+        } // END function getFrameRates
+
+
+        function getVideoResolutions(mediaConstraints) {
+            var select = document.querySelector('#media-resolution')
+            var value = select.value
+
+            if (!mediaConstraints.video || value == 'default') return mediaConstraints
+
+            value = value.split('x')
+            if (value.length != 2) return mediaConstraints
+
+            if (DetectRTC.browser.name === 'Firefox') {
+                mediaConstraints.video.width = defaultWidth
+                mediaConstraints.video.height = defaultHeight
+                return mediaConstraints
+            }
+
+            if (!mediaConstraints.video.mandatory) {
+                mediaConstraints.video.mandatory = {}
+                mediaConstraints.video.optional = []
+            }
+
+            mediaConstraints.video.mandatory.maxWidth = parseInt(value[0])
+            mediaConstraints.video.mandatory.maxHeight = parseInt(value[1])
+
+            return mediaConstraints
+        } // END function getVideoResolutions
+    </script>
+
+
+    <script> // Main
+        function startRecording() {
+            btnStart.innerHTML = 'Stop'
+            btnStart.classList.replace('btn-success', 'btn-danger')
+
             btnStart.disabled = true
 
             var commonConfig = {
@@ -488,17 +520,18 @@
                     console.error('onMediaCapturingFailed:', error)
 
                     if (error.toString().indexOf('no audio or video tracks available') !== -1) {
-                        alert('RecordRTC failed to start because there are no audio or video tracks available.');
+                        alert('RecordRTC failed to start because there are no audio or video tracks available.')
                     }
                     
                     if (error.name === 'PermissionDeniedError' && DetectRTC.browser.name === 'Firefox') {
-                        alert('Firefox requires version >= 52. Firefox also requires HTTPs.');
+                        alert('Firefox requires version >= 52. Firefox also requires HTTPs.')
                     }
 
-                    recordingStatus.innerHTML = 'Failed:<br><code>' + error + '</code>'
+                    recordingStatus.innerHTML = 'Failed<br><br>' + 
+                        '<code>' + error + '</code>'
                     commonConfig.onMediaStopped()
                 }
-            };
+            }
 
             const check_conditions = [mediaContainerFormat.value, mimeType, fileExtension, recorderType, type]
             const checks = [
@@ -522,7 +555,6 @@
 
             checks.forEach(function (check) {
                 if (mediaContainerFormat.value === check[0] && isMimeTypeSupported(check[1])) {
-                    console.log('>>>>>>>>>', mediaContainerFormat.value, check[3])
                     if (check.length > 1) mimeType      = check[1]
                     if (check.length > 2) fileExtension = check[2]
                     if (check.length > 3) recorderType  = check[3]
@@ -530,12 +562,10 @@
                 }
             })
 
-            console.log('ext', mediaContainerFormat.value, fileExtension)
-
             if (recordingMedia.value === 'without-sound') {
-                captureScreen(commonConfig);
+                captureScreen(commonConfig)
             } else if (recordingMedia.value === 'with-sound') {
-                captureAudioPlusScreen(commonConfig);
+                captureAudioPlusScreen(commonConfig)
             }
 
             btnStart.mediaCapturedCallback = function () {
@@ -546,10 +576,10 @@
                     getNativeBlob: true, // enable it for longer recordings,
                     ignoreMutedMedia: true,
                     video: recordingPlayer
-                };
+                }
 
                 if (recorderType) {
-                    options.recorderType = recorderType;
+                    options.recorderType = recorderType
 
                     if (recorderType == WhammyRecorder || recorderType == GifRecorder || recorderType == WebAssemblyRecorder) {
                         options.canvas = options.video = {
@@ -560,7 +590,7 @@
                 }
 
                 if (media_bitrate) {
-                    options.media_bitrate = media_bitrate;
+                    options.media_bitrate = media_bitrate
                 }
 
                 btnStart.recordingEndedCallback = function(url) {
@@ -570,116 +600,46 @@
                 recording = RecordRTC(btnStart.stream, options)
                 recording.startRecording()
             }
-        } // END btnStart.onclick
+        } // END function startRecording
 
 
-        function setBitrate() {
-            var select = document.querySelector('#media-bitrate');
-            var value = select.value;
+        function stopRecording() {
+            btnStart.innerHTML = 'Start'
+            btnStart.classList.replace('btn-danger', 'btn-success')
 
-            media_bitrate = (value == 'default') ? null
-                : parseInt(value)
-        } // END function setBitrate
-
-
-        function getFrameRates(mediaConstraints) {
-            var select = document.querySelector('#media-framerate')
-            var value = select.value
-
-            if (!!mediaConstraints.video || value == 'default') return mediaConstraints
-
-            value = parseInt(value)
-
-            if (DetectRTC.browser.name === 'Firefox') {
-                mediaConstraints.video.frameRate = value;
-                return mediaConstraints;
-            }
-
-            if (!mediaConstraints.video.mandatory) {
-                mediaConstraints.video.mandatory = {};
-                mediaConstraints.video.optional = [];
-            }
-
-            if (recordingMedia.value.toString().toLowerCase().indexOf('screen') != -1) {
-                mediaConstraints.video.mandatory.maxFrameRate = value;
-            } else {
-                mediaConstraints.video.mandatory.minFrameRate = value;
-            }
-
-            return mediaConstraints;
-        } // END function getFrameRates
-
-
-
-
-        function addEventListenerToUploadLocalStorageItem(selector, arr, callback) {
-            arr.forEach(function(event) {
-                document.querySelector(selector).addEventListener(event, callback, false);
-            })
-        } // END function addEventListenerToUploadLocalStorageItem
-
-
-        function getVideoResolutions(mediaConstraints) {
-            var select = document.querySelector('#media-resolution');
-            var value = select.value;
-
-            if (!mediaConstraints.video || value == 'default') return mediaConstraints
-
-            value = value.split('x');
-            if (value.length != 2) return mediaConstraints
-
-            if (DetectRTC.browser.name === 'Firefox') {
-                mediaConstraints.video.width = defaultWidth;
-                mediaConstraints.video.height = defaultHeight;
-                return mediaConstraints;
-            }
-
-            if (!mediaConstraints.video.mandatory) {
-                mediaConstraints.video.mandatory = {};
-                mediaConstraints.video.optional = [];
-            }
-
-            defaultWidth = parseInt(value[0]);
-            defaultHeight = parseInt(value[1]);
-
-            if (recordingMedia.value.toString().toLowerCase().indexOf('screen') != -1) {
-                mediaConstraints.video.mandatory.maxWidth = defaultWidth;
-                mediaConstraints.video.mandatory.maxHeight = defaultHeight;
-            } else {
-                mediaConstraints.video.mandatory.minWidth = defaultWidth;
-                mediaConstraints.video.mandatory.minHeight = defaultHeight;
-            }
-
-            return mediaConstraints;
-        } // END function getVideoResolutions
-
-
-        function captureUserMedia(mediaConstraints, successCallback, errorCallback) {
-            if (mediaConstraints.video == true) {
-                mediaConstraints.video = {}
-            }
-
-            setBitrate()
-
-            mediaConstraints = getVideoResolutions(mediaConstraints)
-            mediaConstraints = getFrameRates(mediaConstraints)
-
-            navigator.mediaDevices.getUserMedia(mediaConstraints).then(function(stream) {
-                successCallback(stream);
-
-                setVideoURL(stream, true);
-            }).catch(function(error) {
-                if (error && (error.name === 'ConstraintNotSatisfiedError' || error.name === 'OverconstrainedError')) {
-                    alert('Your browser does not support the selected resolution or frame-rates. \n\nPlease select "default".');
-                } else if (error && error.message) {
-                    alert(error.message);
-                } else {
-                    alert('Unable to make getUserMedia request. Please check browser console logs.');
+            function stopStream() {
+                if (btnStart.stream && btnStart.stream.stop) {
+                    btnStart.stream.stop()
+                    btnStart.stream = null
                 }
 
-                errorCallback(error);
-            });
-        } // END function captureUserMedia
+                media_bitrate = null
+                recordingStatus.innerHTML = 'Stopped<br><br>' +
+                    '<i>Size: ' + formatBytes(recording.getBlob().size) + '</i>'
+            }
+
+            if (recording) {
+                recording.stopRecording(function(url) {
+                    if (btnStart.blobs && btnStart.blobs.length) {
+                        const blob = new File(
+                            btnStart.blobs,
+                            makeFileName(fileExtension),
+                            {type: mimeType}
+                        )
+                        
+                        recording.getBlob = function() {
+                            return blob
+                        }
+
+                        url = URL.createObjectURL(blob)
+                    }
+
+                    btnStart.recordingEndedCallback(url)
+                    downloadVideo(recording)
+                    stopStream()
+                })
+            }
+        } // END function stopRecording
 
         
         function setMediaContainerFormat(supported_options) {
@@ -711,74 +671,74 @@
 
 
         if (typeof MediaRecorder === 'undefined' && (DetectRTC.browser.name === 'Edge' || DetectRTC.browser.name === 'Safari')) {
-            console.warn('MediaRecorder API and webp are not supported in ' + DetectRTC.browser.name + '.');
+            console.warn('MediaRecorder API and webp are not supported in ' + DetectRTC.browser.name + '.')
 
-            recordingMedia.innerHTML = '<option value="with-sound">With Sound</option>';
+            recordingMedia.innerHTML = '<option value="with-sound">With Sound</option>'
             setMediaContainerFormat(['pcm'])
         }
     </script>
 
     <script> // Endings
         function getFailureReport() {
-            var info = 'RecordRTC failed.\n\n' + stringify(DetectRTC.browser) + '\n\n' + DetectRTC.osName + ' ' + DetectRTC.osVersion + '\n';
+            var info = 'RecordRTC failed.\n\n' + stringify(DetectRTC.browser) + '\n\n' + DetectRTC.osName + ' ' + DetectRTC.osVersion + '\n'
 
             if (typeof recorderType !== 'undefined' && recorderType) {
-                info += '\nrecorderType: ' + recorderType.name;
+                info += '\nrecorderType: ' + recorderType.name
             }
 
             if (typeof mimeType !== 'undefined') {
-                info += '\nmimeType: ' + mimeType;
+                info += '\nmimeType: ' + mimeType
             }
 
             Array.prototype.slice.call(document.querySelectorAll('select')).forEach(function(select) {
-                info += '\n' + (select.id || select.className) + ': ' + select.value;
-            });
+                info += '\n' + (select.id || select.className) + ': ' + select.value
+            })
 
             if (recording) {
-                info += '\n\ninternal-recorder: ' + recording.getInternalRecorder().name;
+                info += '\n\ninternal-recorder: ' + recording.getInternalRecorder().name
                 
                 if (recording.getInternalRecorder().getAllStates) {
-                    info += '\n\nrecorder-states: ' + recording.getInternalRecorder().getAllStates();
+                    info += '\n\nrecorder-states: ' + recording.getInternalRecorder().getAllStates()
                 }
             }
 
             if (btnStart.stream) {
-                info += '\n\naudio-tracks: ' + getTracks(btnStart.stream, 'audio').length;
-                info += '\nvideo-tracks: ' + getTracks(btnStart.stream, 'video').length;
-                info += '\nstream-active? ' + !!btnStart.stream.active;
+                info += '\n\naudio-tracks: ' + getTracks(btnStart.stream, 'audio').length
+                info += '\nvideo-tracks: ' + getTracks(btnStart.stream, 'video').length
+                info += '\nstream-active? ' + !!btnStart.stream.active
 
                 btnStart.stream.getTracks().forEach(function(track) {
-                    info += '\n' + track.kind + '-track-' + (track.label || track.id) + ': (enabled: ' + !!track.enabled + ', readyState: ' + track.readyState + ', muted: ' + !!track.muted + ')';
+                    info += '\n' + track.kind + '-track-' + (track.label || track.id) + ': (enabled: ' + !!track.enabled + ', readyState: ' + track.readyState + ', muted: ' + !!track.muted + ')'
 
                     if (track.getConstraints && Object.keys(track.getConstraints()).length) {
-                        info += '\n' + track.kind + '-track-getConstraints: ' + stringify(track.getConstraints());
+                        info += '\n' + track.kind + '-track-getConstraints: ' + stringify(track.getConstraints())
                     }
 
                     if (track.getSettings && Object.keys(track.getSettings()).length) {
-                        info += '\n' + track.kind + '-track-getSettings: ' + stringify(track.getSettings());
+                        info += '\n' + track.kind + '-track-getSettings: ' + stringify(track.getSettings())
                     }
-                });
+                })
             }
 
             if (timeSlice && recording) {
-                info += '\ntimeSlice: ' + timeSlice;
+                info += '\ntimeSlice: ' + timeSlice
 
                 if (recording.getInternalRecorder().getArrayOfBlobs) {
-                    var blobSizes = [];
+                    var blobSizes = []
                     recording.getInternalRecorder().getArrayOfBlobs().forEach(function(blob) {
-                        blobSizes.push(blob.size);
-                    });
-                    info += '\nblobSizes: ' + blobSizes;
+                        blobSizes.push(blob.size)
+                    })
+                    info += '\nblobSizes: ' + blobSizes
                 }
             } else if (recording && recording.getBlob()) {
-                info += '\n\nblobSize: ' + formatBytes(recording.getBlob().size);
+                info += '\n\nblobSize: ' + formatBytes(recording.getBlob().size)
             }
 
             if (recording && recording.getInternalRecorder() && recording.getInternalRecorder().getInternalRecorder && recording.getInternalRecorder().getInternalRecorder()) {
-                info += '\n\ngetInternalRecorder: ' + mediaRecorderToStringify(recording.getInternalRecorder().getInternalRecorder());
+                info += '\n\ngetInternalRecorder: ' + mediaRecorderToStringify(recording.getInternalRecorder().getInternalRecorder())
             }
 
-            return info;
+            return info
         } // END function getFailureReport
 
 
@@ -790,15 +750,15 @@
                 console.error('report', info)
 
                 if (mediaContainerFormat.value !== 'default') {
-                    alert('Recording failed using ' + mediaContainerFormat.value + '. Please choose "default" option from the drop down and record again.');
+                    alert('Recording failed using ' + mediaContainerFormat.value + '. Please choose "default" option from the drop down and record again.')
                 } else {
-                    alert('Recording failed. Unexpected issue. Please see console log.');
+                    alert('Recording failed. Unexpected issue. Please see console log.')
                 } if (mediaContainerFormat.value !== 'vp9' && DetectRTC.browser.name === 'Chrome') {
-                    alert('Please record using VP9 format.');
+                    alert('Please record using VP9 format.')
                 }
             }
 
-            var fileName = makeFileName(fileExtension);
+            var fileName = makeFileName(fileExtension)
 
             btnDownload.style.display = ''
             btnUpload.style.display = ''
@@ -808,132 +768,146 @@
 
                 if (!recordRTC) return alert('No recording found.')
 
+                const blob = recording.getBlob()
+
                 var file = new File(
-                    [recordRTC.getBlob()],
+                    [blob],
                     fileName,
                     {type: mimeType}
                 )
 
                 invokeSaveAsDialog(file, file.name)
 
-                recordingStatus.innerHTML = 'Downloaded<br><i>' +
-                    'Size: ' + formatBytes(recording.getBlob().size) + '<br>' +
+                recordingStatus.innerHTML = 'Downloaded<br><br><i>' +
+                    'Size: ' + formatBytes(blob.size) + '<br>' +
                     'Name: ' + fileName + '</i>'
+
+                addRecordingToDatabase(blob, fileName)
+                /*var reader = new FileReader()
+                reader.readAsDataURL(blob)
+
+                reader.onloadend = function () {
+                    addRecordingToDatabase({
+                        id: fileName,
+                        agent: "Agent_" + Math.floor(Math.random() * 10000),
+                        recording: reader.result // Base 64
+                    })
+                }*/
             }
 
             // upload to PHP server
             if (isMyOwnDomain()) {
-                btnUpload.disabled = true;
-                btnUpload.style.display = 'none';
+                btnUpload.disabled = true
+                btnUpload.style.display = 'none'
             } else {
-                btnUpload.disabled = false;
+                btnUpload.disabled = false
             }
             
             btnUpload.onclick = function(event) {
                 event.preventDefault()
 
                 if (isMyOwnDomain()) {
-                    alert('PHP Upload is not available on this domain.');
-                    return;
+                    alert('PHP Upload is not available on this domain.')
+                    return
                 }
 
                 if (!recordRTC) return alert('No recording found.')
 
-                this.disabled = true;
+                this.disabled = true
 
                 var button = this
 
                 uploadVideo(fileName, recordRTC, function(progress, fileURL) {
                     if (progress === 'ended') {
-                        button.disabled = false;
-                        button.innerHTML = 'Click to download from server';
+                        button.disabled = false
+                        button.innerHTML = 'Click to download from server'
                         button.onclick = function(event) {
                             event.preventDefault()
-                            saveUrlToDisk(fileURL, fileName);
-                        };
+                            saveUrlToDisk(fileURL, fileName)
+                        }
 
-                        setVideoURL(fileURL);
+                        setVideoURL(fileURL)
 
-                        recordingStatus.innerHTML = 'Uploaded<br><i>' +
-                            `<a href="${fileURL}" download="${fileName}">${fileName}</a></i>`
-                        return;
+                        recordingStatus.innerHTML = 'Uploaded<br><br>' +
+                            `<i><a href="${fileURL}" download="${fileName}">${fileName}</a></i>`
+                        return
                     }
 
-                    button.innerHTML = progress;
-                    recordingStatus.innerHTML = progress;
-                });
-            };
+                    button.innerHTML = progress
+                    recordingStatus.innerHTML = progress
+                })
+            }
         } // END function downloadVideo
 
 
         function uploadVideo(fileName, recordRTC, callback) {
-            var blob = recordRTC instanceof Blob ? recordRTC : recordRTC.getBlob();
+            var blob = recordRTC instanceof Blob ? recordRTC : recordRTC.getBlob()
             
             blob = new File([blob], makeFileName(fileExtension), {
                 type: mimeType
-            });
+            })
 
             // create FormData
-            var formData = new FormData();
-            formData.append('video-filename', fileName);
-            formData.append('video-blob', blob);
+            var formData = new FormData()
+            formData.append('video-filename', fileName)
+            formData.append('video-blob', blob)
 
-            callback('Uploading to server');
+            callback('Uploading to server')
 
-            // var upload_url = 'https://your-domain.com/files-uploader/';
-            var upload_url = 'RecordRTC-to-PHP/save.php';
+            // var upload_url = 'https://your-domain.com/files-uploader/'
+            var upload_url = 'RecordRTC-to-PHP/save.php'
 
-            // var upload_directory = upload_url;
-            var upload_directory = 'RecordRTC-to-PHP/uploads/';
+            // var upload_directory = upload_url
+            var upload_directory = 'RecordRTC-to-PHP/uploads/'
 
             makeXMLHttpRequest(upload_url, formData, function(progress) {
                 if (progress !== 'upload-ended') {
-                    callback(progress);
-                    return;
+                    callback(progress)
+                    return
                 }
 
-                callback('ended', upload_directory + fileName);
-            });
+                callback('ended', upload_directory + fileName)
+            })
         } // END function uploadVideo
 
 
         function makeXMLHttpRequest(url, data, callback) {
-            var request = new XMLHttpRequest();
+            var request = new XMLHttpRequest()
             request.onreadystatechange = function() {
                 if (request.readyState == 4 && request.status == 200) {
                     if (request.responseText === 'success') {
-                        callback('upload-ended');
-                        return;
+                        callback('upload-ended')
+                        return
                     }
                 }
-            };
+            }
 
             request.upload.onloadstart = function() {
-                callback('Upload started...');
-            };
+                callback('Upload started...')
+            }
 
             request.upload.onprogress = function(event) {
-                callback('Upload Progress: ' + Math.round(event.loaded / event.total * 100) + "%");
-            };
+                callback('Upload Progress: ' + Math.round(event.loaded / event.total * 100) + "%")
+            }
 
             request.upload.onload = function() {
-                callback('progress-about-to-end');
-            };
+                callback('progress-about-to-end')
+            }
 
             request.upload.onload = function() {
-                callback('Getting File URL...');
-            };
+                callback('Getting File URL...')
+            }
 
             request.upload.onerror = function(error) {
-                callback('Failed to upload to server');
-            };
+                callback('Failed to upload to server')
+            }
 
             request.upload.onabort = function(error) {
-                callback('Upload aborted.');
-            };
+                callback('Upload aborted.')
+            }
 
-            request.open('POST', url);
-            request.send(data);
+            request.open('POST', url)
+            request.send(data)
         } // END function makeXMLHttpRequest
 
 
@@ -971,7 +945,7 @@
                 : (type == 'audio') ? 'audio'
                 : 'video'
 
-            recordingPlayer = document.createElement(elem);
+            recordingPlayer = document.createElement(elem)
             recordingPlayer.muted = (arg instanceof MediaStream)
 
             recordingPlayer.addEventListener('loadedmetadata', function() {
@@ -981,18 +955,18 @@
             recordingPlayer.poster = ''
 
             if (arg instanceof MediaStream) {
-                recordingPlayer.srcObject = arg;
+                recordingPlayer.srcObject = arg
             } else {
-                recordingPlayer.src = getURL(arg);
+                recordingPlayer.src = getURL(arg)
             }
 
             if (typeof recordingPlayer.play === 'function') recordingPlayer.play()
 
             recordingPlayer.addEventListener('ended', function() {
                 if (arg instanceof MediaStream) {
-                    recordingPlayer.srcObject = arg;
+                    recordingPlayer.srcObject = arg
                 } else {
-                    recordingPlayer.src = getURL(arg);
+                    recordingPlayer.src = getURL(arg)
                 }
             })
 
