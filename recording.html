@@ -123,6 +123,7 @@
         var defaultHeight = 1080
 
         var media_bitrate
+        var media_constraints = {video: {}}
     </script>
 
     <script> // Helper functions
@@ -295,10 +296,6 @@
                     document.querySelector(selector).value = localStorage.getItem(storageItem)
                 }
 
-                // addEventListenerToUploadLocalStorageItem(selector, ['change', 'blur'], function() {
-                //     localStorage.setItem(storageItem, document.querySelector(selector).value)
-                // })
-
                 var arr = ['change', 'blur']
 
                 arr.forEach(function (event) {
@@ -310,13 +307,6 @@
                 })
             })
         } // END function setGetFromLocalStorage
-    
-        
-        // function addEventListenerToUploadLocalStorageItem(selector, arr, callback) {
-        //     arr.forEach(function(event) {
-        //         document.querySelector(selector).addEventListener(event, callback, false)
-        //     })
-        // } // END function addEventListenerToUploadLocalStorageItem
     </script>
 
     <script> // HTML variables
@@ -356,13 +346,10 @@
 
 
             function commonAll(navi) {
-                mediaConstraints = {video: {}}
-                mediaConstraints = getVideoResolutions(mediaConstraints)
-                mediaConstraints = getFrameRates(mediaConstraints)
-                console.log('Constraints After:', mediaConstraints)
+                media_constraints = getMediaConstraints()
 
                 navi.getDisplayMedia(
-                    mediaConstraints
+                    media_constraints
                 ).then(screenStream => {
                     if (mic) {
                         navigator.mediaDevices.getUserMedia({
@@ -442,55 +429,62 @@
         } // END function setBitrate
 
 
-        function getFrameRates(mediaConstraints) {
+        function getFrameRates(constraints) {
             var select = document.querySelector('#media-framerate')
             var value = select.value
             
-            if (!mediaConstraints.video || value == 'default') return mediaConstraints
+            if (!constraints.video || value == 'default') return constraints
             
             value = parseInt(value)
             
             if (DetectRTC.browser.name === 'Firefox') {
-                mediaConstraints.video.frameRate = value
-                return mediaConstraints
+                constraints.video.frameRate = value
+                return constraints
             }
 
-            if (!mediaConstraints.video.mandatory) {
-                mediaConstraints.video.mandatory = {}
-                mediaConstraints.video.optional = []
+            if (!constraints.video.mandatory) {
+                constraints.video.mandatory = {}
+                constraints.video.optional = []
             }
 
-            mediaConstraints.video.mandatory.maxFrameRate = value
+            constraints.video.mandatory.maxFrameRate = value
 
-            return mediaConstraints
+            return constraints
         } // END function getFrameRates
 
 
-        function getVideoResolutions(mediaConstraints) {
+        function getVideoResolutions(constraints) {
             var select = document.querySelector('#media-resolution')
             var value = select.value
 
-            if (!mediaConstraints.video || value == 'default') return mediaConstraints
+            if (!constraints.video || value == 'default') return constraints
 
             value = value.split('x')
-            if (value.length != 2) return mediaConstraints
+            if (value.length != 2) return constraints
 
             if (DetectRTC.browser.name === 'Firefox') {
-                mediaConstraints.video.width = defaultWidth
-                mediaConstraints.video.height = defaultHeight
-                return mediaConstraints
+                constraints.video.width = defaultWidth
+                constraints.video.height = defaultHeight
+                return constraints
             }
 
-            if (!mediaConstraints.video.mandatory) {
-                mediaConstraints.video.mandatory = {}
-                mediaConstraints.video.optional = []
+            if (!constraints.video.mandatory) {
+                constraints.video.mandatory = {}
+                constraints.video.optional = []
             }
 
-            mediaConstraints.video.mandatory.maxWidth = parseInt(value[0])
-            mediaConstraints.video.mandatory.maxHeight = parseInt(value[1])
+            constraints.video.mandatory.maxWidth = parseInt(value[0])
+            constraints.video.mandatory.maxHeight = parseInt(value[1])
 
-            return mediaConstraints
+            return constraints
         } // END function getVideoResolutions
+    
+    
+        function getMediaConstraints() {
+            setBitrate()
+            media_constraints = getVideoResolutions(media_constraints)
+            media_constraints = getFrameRates(media_constraints)
+        } // END function getMediaConstraints
     </script>
 
 
@@ -745,6 +739,7 @@
         function downloadVideo(recordRTC) {
             if (!recordRTC.getBlob().size) {
                 var info = getFailureReport()
+
                 console.error('blob', recordRTC.getBlob())
                 console.error('recordrtc instance', recordRTC)
                 console.error('report', info)
@@ -769,6 +764,7 @@
                 if (!recordRTC) return alert('No recording found.')
 
                 const blob = recording.getBlob()
+                blob.constraints = media_constraints
 
                 var file = new File(
                     [blob],
@@ -783,16 +779,6 @@
                     'Name: ' + fileName + '</i>'
 
                 addRecordingToDatabase(blob, fileName)
-                /*var reader = new FileReader()
-                reader.readAsDataURL(blob)
-
-                reader.onloadend = function () {
-                    addRecordingToDatabase({
-                        id: fileName,
-                        agent: "Agent_" + Math.floor(Math.random() * 10000),
-                        recording: reader.result // Base 64
-                    })
-                }*/
             }
 
             // upload to PHP server
