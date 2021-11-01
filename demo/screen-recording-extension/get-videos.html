@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<body>
+
+    <style>
+        .card {
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+            transition: opacity 1s;
+            width: 200px;
+            border-radius: 5px;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .container {
+            padding: 2px 16px;
+        }
+
+        .fade-in {
+            opacity: 1;
+            animation-name: fadeInOpacity;
+            animation-iteration-count: 1;
+            animation-timing-function: ease-in;
+            animation-duration: 2s;
+        }
+
+        @keyframes fadeInOpacity {
+            0% {
+                opacity: 0;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .removed {
+            opacity: 0;
+        }
+
+        .displayNone {
+            display: none;
+        }
+    </style>
+
+    <div id="cards">
+
+    </div>
+    <!-- <div class="card">
+        <div class="container">
+            <h4><b>Jane Doe</b></h4>
+            <p>Interior Designer</p>
+        </div>
+    </div> -->
+
+
+    <script src="recording-db.js"></script>
+    <script>
+
+        var allEntries = [];
+
+        readTable("recordings", "recordings-db");
+
+        function readTable(table, dbName) {
+            let open = indexedDB.open(dbName, 1);
+            return new Promise(resolve => {
+                open.onsuccess = evt => {
+                    let db = open.result;
+                    let tran = db.transaction(table);
+                    let objectStore = tran.objectStore(table);
+                    if (allEntries.length == 0) {
+                        objectStore.openCursor().onsuccess = function (event) {
+                            var cursor = event.target.result;
+                            if (cursor) {
+                                var json = {
+                                    key: cursor.key,
+                                    call_id: cursor.value.id,
+                                    agent: cursor.value.agent,
+                                };
+                                document.getElementById("cards").innerHTML += "<div class='card' id='" + json.call_id + "'>" + " <div class='container'>" + " <h4><b>" + json.agent + "</b></h4>" + "<p>" + json.call_id + "</p>" + "</div>" + "</div>";
+                                allEntries.push(json);
+                                cursor.continue();
+                            }
+                            else {
+                                //alert("No more entries!");
+                            }
+                        };
+                    }
+                    else {
+                        var newEntries = [];
+                        objectStore.openCursor().onsuccess = function (event) {
+                            var cursor = event.target.result;
+                            if (cursor) {
+                                var json = {
+                                    key: cursor.key,
+                                    call_id: cursor.value.id,
+                                    agent: cursor.value.agent,
+                                };
+                                const found = allEntries.some(el => el.call_id === json.call_id);
+                                console.log(found);
+                                if (!found) {
+                                    document.getElementById("cards").innerHTML += "<div class='card fade-in' id='" + json.call_id + "'>" + " <div class='container'>" + " <h4><b>" + json.agent + "</b></h4>" + "<p>" + json.call_id + "</p>" + "</div>" + "</div>";
+                                    allEntries.push(json);
+                                }
+                                newEntries.push(json);
+                                cursor.continue();
+                            }
+                            else {
+                                allEntries.forEach(function (obj) {
+                                    const found = newEntries.some(el => el.call_id === obj.call_id);
+                                    if (!found) {
+                                        document.getElementById(obj.call_id).className += " removed";
+
+                                        setTimeout(function () {
+                                            document.getElementById(obj.call_id).className += " displayNone";
+                                        }, 900)
+                                    }
+
+                                })
+                            }
+                        };
+                    }
+
+                };
+            });
+        }
+
+        setInterval(function () {
+            readTable("recordings", "recordings-db");
+        }, 3000);
+
+    </script>
+
+</body>
+
+</html>
