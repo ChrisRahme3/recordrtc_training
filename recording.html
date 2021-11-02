@@ -117,7 +117,7 @@
         var fileExtension = 'webm'
         var type          = 'video'
 
-        var recording
+        var rec_data      = {recording: null, stream: null}
 
         var recorderType
         var defaultWidth  = 1920
@@ -268,6 +268,7 @@
         media_element.media.parentNode.appendChild(media_element_container)
         media_element_container.appendChild(media_element.media)
 
+
         function initFormats() {
             var filetype_options = []
 
@@ -285,7 +286,7 @@
             })
 
             setMediaContainerFormat(filetype_options)
-        }
+        } // END function initFormats
     
     
         function setGetFromLocalStorage(selectors) {
@@ -323,16 +324,19 @@
         function capture(mic = true) {
             var config = {
                 onMediaCaptured: function(stream) {
-                    btnStart.stream = stream
+                    rec_data.stream = stream
                     btnStart.mediaCapturedCallback()
+
                     btnStart.innerHTML = 'Stop'
                     btnStart.classList.replace('btn-success', 'btn-danger')
+
                     recordingStatus.innerHTML = 'In progress'
                 },
 
                 onMediaStopped: function() {
                     btnStart.innerHTML = 'Start'
                     btnStart.classList.replace('btn-danger', 'btn-success')
+
                     recordingStatus.innerHTML = 'Inactive'
                 },
 
@@ -570,8 +574,8 @@
                     setVideoURL(url)
                 }
 
-                recording = RecordRTC(btnStart.stream, options)
-                recording.startRecording()
+                rec_data.recording = RecordRTC(rec_data.stream, options)
+                rec_data.recording.startRecording()
             }
         } // END function startRecording
 
@@ -582,19 +586,19 @@
             btnDownload.classList.remove('hidden')
             //btnUpload.classList.remove('hidden')
 
-            if (recording) {
-                recording.stopRecording(function(url) {
+            if (rec_data.recording) {
+                rec_data.recording.stopRecording(function(url) {
                     btnStart.recordingEndedCallback(url)
 
-                    downloadVideo(recording)
+                    downloadVideo(rec_data.recording)
 
-                    if (btnStart.stream && btnStart.stream.stop) {
-                        btnStart.stream.stop()
-                        btnStart.stream = null
+                    if (rec_data.stream && rec_data.stream.stop) {
+                        rec_data.stream.stop()
+                        rec_data.stream = null
                     }
 
                     recordingStatus.innerHTML = 'Stopped<br><br>' +
-                        '<i>Size: ' + formatBytes(recording.getBlob().size) + '</i>'
+                        '<i>Size: ' + formatBytes(rec_data.recording.getBlob().size) + '</i>'
                 })
             }
         } // END function stopRecording
@@ -652,20 +656,20 @@
                 info += '\n' + (select.id || select.className) + ': ' + select.value
             })
 
-            if (recording) {
-                info += '\n\ninternal-recorder: ' + recording.getInternalRecorder().name
+            if (rec_data.recording) {
+                info += '\n\ninternal-recorder: ' + rec_data.recording.getInternalRecorder().name
                 
-                if (recording.getInternalRecorder().getAllStates) {
-                    info += '\n\nrecorder-states: ' + recording.getInternalRecorder().getAllStates()
+                if (rec_data.recording.getInternalRecorder().getAllStates) {
+                    info += '\n\nrecorder-states: ' + rec_data.recording.getInternalRecorder().getAllStates()
                 }
             }
 
-            if (btnStart.stream) {
-                info += '\n\naudio-tracks: ' + getTracks(btnStart.stream, 'audio').length
-                info += '\nvideo-tracks: ' + getTracks(btnStart.stream, 'video').length
-                info += '\nstream-active? ' + !!btnStart.stream.active
+            if (rec_data.stream) {
+                info += '\n\naudio-tracks: ' + getTracks(rec_data.stream, 'audio').length
+                info += '\nvideo-tracks: ' + getTracks(rec_data.stream, 'video').length
+                info += '\nstream-active? ' + !!rec_data.stream.active
 
-                btnStart.stream.getTracks().forEach(function(track) {
+                rec_data.stream.getTracks().forEach(function(track) {
                     info += '\n' + track.kind + '-track-' + (track.label || track.id) + ': (enabled: ' + !!track.enabled + ', readyState: ' + track.readyState + ', muted: ' + !!track.muted + ')'
 
                     if (track.getConstraints && Object.keys(track.getConstraints()).length) {
@@ -678,22 +682,22 @@
                 })
             }
 
-            if (timeSlice && recording) {
+            if (timeSlice && rec_data.recording) {
                 info += '\ntimeSlice: ' + timeSlice
 
-                if (recording.getInternalRecorder().getArrayOfBlobs) {
+                if (rec_data.recording.getInternalRecorder().getArrayOfBlobs) {
                     var blobSizes = []
-                    recording.getInternalRecorder().getArrayOfBlobs().forEach(function(blob) {
+                    rec_data.recording.getInternalRecorder().getArrayOfBlobs().forEach(function(blob) {
                         blobSizes.push(blob.size)
                     })
                     info += '\nblobSizes: ' + blobSizes
                 }
-            } else if (recording && recording.getBlob()) {
-                info += '\n\nblobSize: ' + formatBytes(recording.getBlob().size)
+            } else if (rec_data.recording && rec_data.recording.getBlob()) {
+                info += '\n\nblobSize: ' + formatBytes(rec_data.recording.getBlob().size)
             }
 
-            if (recording && recording.getInternalRecorder() && recording.getInternalRecorder().getInternalRecorder && recording.getInternalRecorder().getInternalRecorder()) {
-                info += '\n\ngetInternalRecorder: ' + mediaRecorderToStringify(recording.getInternalRecorder().getInternalRecorder())
+            if (rec_data.recording && rec_data.recording.getInternalRecorder() && rec_data.recording.getInternalRecorder().getInternalRecorder && rec_data.recording.getInternalRecorder().getInternalRecorder()) {
+                info += '\n\ngetInternalRecorder: ' + mediaRecorderToStringify(rec_data.recording.getInternalRecorder().getInternalRecorder())
             }
 
             return info
@@ -727,7 +731,7 @@
                 const filename = makeFileName(fileExtension)
 
                 let blob = new Blob(
-                    [recording.getBlob()],
+                    [rec_data.recording.getBlob()],
                     {type: mime_type}
                 )
 
