@@ -11,9 +11,23 @@ function formatBytes(bytes, decimals = 2, k = 1024) {
 
 
 function makeFileName(fileExtension) {
-    var d = new Date().toISOString()
-        .replace(/:/g, '-').replace(/\./g, '-')
-        .replace(/T/g, '_').replace(/Z/g, '')
+    var z  = n =>  ('0' + n).slice(-2)
+    var zz = n => ('00' + n).slice(-3)
 
+    var d = new Date()
+
+    var off = d.getTimezoneOffset()
+
+    var sign = off > 0? '-' : '+'
+    off = Math.abs(off)
+
+    d = d.getFullYear() + '-' +
+        z(d.getMonth()+1) + '-' +
+        z(d.getDate()) + '_' +
+        z(d.getHours()) + '-'  + 
+        z(d.getMinutes()) + '-' +
+        z(d.getSeconds()) + '-' +
+        zz(d.getMilliseconds())
+            
     return `ScreenRecord_${d}.${fileExtension}`
 } // END function makeFileName
