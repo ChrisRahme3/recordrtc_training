@@ -45,10 +45,10 @@
                     <label for="media-resolution" class="form-label">Resolution</label>
                     <select id="media-resolution" class="form-select">
                         <option value="default" selected>Default</option>
-                        <option value="3840x2160">4K     </option>
-                        <option value="1920x1080">1080p  </option>
-                        <option value="1280x720"> 720p   </option>
-                        <option value="640x480">  480p   </option>
+                        <option value="3840x2160">4K   </option>
+                        <option value="1920x1080">1080p</option>
+                        <option value="1280x720"> 720p </option>
+                        <option value="640x480">  480p </option>
                     </select>
                 </div>
 
@@ -58,9 +58,9 @@
                         <option value="default" selected>Default</option>
                         <option value="60">60 fps</option>
                         <option value="30">30 fps</option>
-                        <option value="24">24 fps</option>
                         <option value="15">15 fps</option>
-                        <option value="5"> 5 fps </option>
+                        <option value="10">10 fps</option>
+                        <option value="5">  5 fps</option>
                     </select>
                 </div>
 
@@ -68,14 +68,11 @@
                     <label for="media-resolution" class="form-label">Bitrate</label>
                     <select id="media-bitrate" class="form-select">
                         <option value="default" selected>Default</option>
-                        <option value="8000000000">1 GB/s  </option>
-                        <option value="800000000"> 100 MB/s</option>
-                        <option value="80000000">  10 MB/s </option>
-                        <option value="8000000">   1 MB/s  </option>
-                        <option value="800000">    100 KB/s</option>
-                        <option value="80000">     10 KB/s </option>
-                        <option value="8000">      1 KB/s  </option>
-                        <option value="800">       100 B/s </option>
+                        <option value="8000000000">  1 GB/s</option>
+                        <option value="4000000000">500 MB/s</option>
+                        <option value="8000000">     1 MB/s</option>
+                        <option value="4000000">   500 KB/s</option>
+                        <option value="8000">        1 KB/s</option>
                     </select>
                 </div>
 
@@ -96,8 +93,6 @@
                     <button id="btn-start"    class="btn btn-success"       >Start   </button>
                     <button id="btn-download" class="btn btn-primary hidden">Download</button>
                     <button id="btn-upload"   class="btn btn-warning hidden">Upload  </button>
-                    <!-- <button id="btn-download" class="btn btn-primary">Download</button> -->
-                    <!-- <button id="btn-upload"   class="btn btn-warning">Upload  </button> -->
                 </div>
 
                 <div id="recording-feedback" class="mt-4">
