@@ -18,6 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
 
     <script src="node_modules/recordrtc/RecordRTC.js"></script>
+    <script src="assets/js/moment.js"></script>
     <script src="assets/js/helpers.js"></script>
     <script src="assets/js/media.js"></script>
     <script src="assets/js/recording-db.js"></script>
@@ -92,9 +93,9 @@
 
             <div id="recording-info" class="col-3">
                 <div id="recording-control">
-                    <button id="btn-start"    class="btn btn-success"                      >Start   </button>
-                    <button id="btn-download" class="btn btn-primary" style="display: none">Download</button>
-                    <button id="btn-upload"   class="btn btn-warning" style="display: none">Upload  </button>
+                    <button id="btn-start"    class="btn btn-success"       >Start   </button>
+                    <button id="btn-download" class="btn btn-primary hidden">Download</button>
+                    <button id="btn-upload"   class="btn btn-warning hidden">Upload  </button>
                     <!-- <button id="btn-download" class="btn btn-primary">Download</button> -->
                     <!-- <button id="btn-upload"   class="btn btn-warning">Upload  </button> -->
                 </div>
@@ -320,8 +321,36 @@
     </script>
 
     <script> // Capture Functions
-        function capture(config, mic = true) {
-            function commonThen(config, screenStream) {
+        function capture(mic = true) {
+            var config = {
+                onMediaCaptured: function(stream) {
+                    btnStart.stream = stream
+                    btnStart.mediaCapturedCallback()
+                    btnStart.innerHTML = 'Stop'
+                    btnStart.classList.replace('btn-success', 'btn-danger')
+                    recordingStatus.innerHTML = 'In progress'
+                },
+
+                onMediaStopped: function() {
+                    btnStart.innerHTML = 'Start'
+                    btnStart.classList.replace('btn-danger', 'btn-success')
+                    recordingStatus.innerHTML = 'Inactive'
+                },
+
+                onMediaCapturingFailed: function(error) {
+                    console.error('onMediaCapturingFailed:', error)
+
+                    btnStart.innerHTML = 'Start'
+                    btnStart.classList.replace('btn-danger', 'btn-success')
+
+                    recordingStatus.innerHTML = 'Failed<br><br>' + 
+                        '<code>' + error + '</code>'
+
+                    commonConfig.onMediaStopped()
+                }
+            }
+
+            function commonThen(screenStream) {
                 config.onMediaCaptured(screenStream)
 
                 addStreamStopListener(screenStream, function() {
@@ -332,7 +361,7 @@
             } // END subfunction commonThen
 
 
-            function commonCatch(config, error) {
+            function commonCatch(error) {
                 if (error && (error.name === 'ConstraintNotSatisfiedError' || error.name === 'OverconstrainedError')) {
                     alert('Your browser does not support the selected resolution or frame-rates. \n\nPlease select "default".')
                 } else if (error && error.message) {
@@ -356,15 +385,15 @@
                             audio:true
                         }).then(function(mic) {
                             screenStream.addTrack(mic.getTracks()[0])
-                            commonThen(config, screenStream)
+                            commonThen(screenStream)
                         }).catch(function(error) {
-                            commonCatch(config, error)
+                            commonCatch(error)
                         })
                     } else {
-                        commonThen(config, screenStream)
+                        commonThen(screenStream)
                     }
                 }).catch(function(error) {
-                    commonCatch(config, error)
+                    commonCatch(error)
                 })
             } // END subfunction commonAll
 
@@ -379,21 +408,10 @@
                 alert(error)
             }
         }
-        
-        
-        function captureScreen(config) {
-            capture(config, false)
-        }
-
-
-        function captureAudioPlusScreen(config) {
-            capture(config, true)
-        }
     </script>
     
     <script> // Initialization
         window.onbeforeunload = function() {
-            btnStart.disabled = false
             recordingMedia.disabled = false
             mediaContainerFormat.disabled = false
         }
@@ -497,39 +515,7 @@
             btnStart.innerHTML = 'Stop'
             btnStart.classList.replace('btn-success', 'btn-danger')
 
-            btnStart.disabled = true
-
-            var commonConfig = {
-                onMediaCaptured: function(stream) {
-                    btnStart.stream = stream
-                    btnStart.mediaCapturedCallback()
-                    btnStart.innerHTML = 'Stop'
-                    btnStart.disabled = false
-                    recordingStatus.innerHTML = 'In progress'
-                },
-
-                onMediaStopped: function() {
-                    btnStart.innerHTML = 'Start'
-                    btnStart.disabled = btnStart.disableStateWaiting
-                    recordingStatus.innerHTML = 'Inactive'
-                },
-
-                onMediaCapturingFailed: function(error) {
-                    console.error('onMediaCapturingFailed:', error)
-
-                    if (error.toString().indexOf('no audio or video tracks available') !== -1) {
-                        alert('RecordRTC failed to start because there are no audio or video tracks available.')
-                    }
-                    
-                    if (error.name === 'PermissionDeniedError' && DetectRTC.browser.name === 'Firefox') {
-                        alert('Firefox requires version >= 52. Firefox also requires HTTPs.')
-                    }
-
-                    recordingStatus.innerHTML = 'Failed<br><br>' + 
-                        '<code>' + error + '</code>'
-                    commonConfig.onMediaStopped()
-                }
-            }
+            btnDownload.classList.add('hidden')
 
             const check_conditions = [mediaContainerFormat.value, mime_type, fileExtension, recorderType, type]
             const checks = [
@@ -560,17 +546,13 @@
                 }
             })
 
-            if (recordingMedia.value === 'without-sound') {
-                captureScreen(commonConfig)
-            } else if (recordingMedia.value === 'with-sound') {
-                captureAudioPlusScreen(commonConfig)
-            }
+            capture(recordingMedia.value === 'with-sound')
 
             btnStart.mediaCapturedCallback = function () {
                 var options = {
                     type: type,
                     mimeType: mime_type,
-                    disableLogs: params.disableLogs || false,
+                    disableLogs: true, //params.disableLogs || false,
                     getNativeBlob: true, // enable it for longer recordings,
                     ignoreMutedMedia: true,
                     video: recordingPlayer
@@ -604,10 +586,8 @@
         function stopRecording() {
             btnStart.innerHTML = 'Start'
             btnStart.classList.replace('btn-danger', 'btn-success')
-
-            function stopStream() {
-                
-            }
+            btnDownload.classList.remove('hidden')
+            //btnUpload.classList.remove('hidden')
 
             if (recording) {
                 recording.stopRecording(function(url) {
@@ -745,9 +725,6 @@
             }
 
             var filename = makeFileName(fileExtension)
-
-            btnDownload.style.display = ''
-            //btnUpload.style.display = ''
 
             btnDownload.onclick = function(event) {
                 event.preventDefault()
