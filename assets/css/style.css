@@ -29,6 +29,20 @@ main select {
 
 
 
+.hidden {
+    display: none;
+}
+
+.float-left {
+    float: left
+}
+
+.float-right {
+    float: right
+}
+
+
+
 #recording-control button {
     width: 100%;
     margin-bottom: 1rem;
