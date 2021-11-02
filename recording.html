@@ -500,9 +500,9 @@
         function getMediaConstraints() {
             let temp_constraints = media_constraints
 
-            temp_constraints.audio = {
-                echoCancellation: true
-            }
+            // temp_constraints.audio = {
+            //     echoCancellation: true
+            // }
 
             setBitrate()
             temp_constraints = getVideoResolutions(temp_constraints)
@@ -520,18 +520,18 @@
 
             btnDownload.classList.add('hidden')
 
-            const check_conditions = [mediaContainerFormat.value, mime_type, fileExtension, recorderType, type]
+            const check_conditions = [mediaContainerFormat.value, mime_type, fileExtension, recorderType]
             const checks = [
                 ['h264',        'video/mpeg',                   'mp4'],
                 ['h264',        'video/webm\;codecs=h264',      'mp4'],
                 ['mp4',         'video/mpeg',                   'mp4'],
                 ['mp4',         'video/webm\;codecs=h264',      'mp4'],
                 ['mkv',         'video/x-matroska;codecs=avc1', 'mkv'],
-                ['whammy',      'video/webm',                   'webm', WhammyRecorder,      'video'],
-                ['WebAssembly', 'video/webm',                   'webm', WebAssemblyRecorder, 'video'],
-                ['vp8',         'video/webm\;codecs=vp8',       'webm', null,                'video'],
-                ['vp9',         'video/webm\;codecs=vp9',       'webm', null,                'video'],
-                ['default',     'video/webm',                   'webm', null,                'video'],
+                ['whammy',      'video/webm',                   'webm', WhammyRecorder,    ],
+                ['WebAssembly', 'video/webm',                   'webm', WebAssemblyRecorder],
+                ['vp8',         'video/webm\;codecs=vp8',       'webm', null,              ],
+                ['vp9',         'video/webm\;codecs=vp9',       'webm', null,              ],
+                ['default',     'video/webm',                   'webm', null,              ],
             ]
 
             checks.forEach(function (check) {
@@ -539,7 +539,6 @@
                     if (check.length > 1) mime_type     = check[1]
                     if (check.length > 2) fileExtension = check[2]
                     if (check.length > 3) recorderType  = check[3]
-                    if (check.length > 4) type          = check[4]
                 }
             })
 
@@ -547,7 +546,7 @@
 
             btnStart.mediaCapturedCallback = function () {
                 var options = {
-                    type: type,
+                    type: 'video',
                     mimeType: mime_type,
                     disableLogs: true, //params.disableLogs || false,
                     getNativeBlob: true, // enable it for longer recordings,
