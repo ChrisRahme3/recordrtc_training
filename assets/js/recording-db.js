@@ -130,7 +130,7 @@ function makeHistoryCard(cursor) {
 
                     <video controls src="${json.url}" class="card-img my-3" type="${json.type}"></video>
 
-                    <a class="btn btn-primary float-right" href="${json.url}">Download</a>
+                    <a class="btn btn-primary float-right" href="${json.url}" download="${json.id}">Download</a>
                 </div>
             </div>
         </div>
