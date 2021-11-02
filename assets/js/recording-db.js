@@ -97,7 +97,13 @@ function makeHistoryCard(cursor) {
         url          : URL.createObjectURL(cursor.value)
     }
 
+    const date = json.name.split('_')[0]
+    const time = json.name.split('_')[1].replace(/-/g, ':')
+    const datetime = moment(date + ' ' + time)
+
     const items_object = {
+        'Date': datetime.format('DD MMM YYYY'),
+        'Time': datetime.format('hh:mm:ss A'),
         'Format': json.ext.toUpperCase(),
         'Size': formatBytes(json.size),
         'Resolution': json.resolution,
@@ -107,7 +113,7 @@ function makeHistoryCard(cursor) {
 
     const items_html = Object.entries(items_object).map(function ([k, v], i) {
         if (v) {
-            return `<li class="list-group-item" style="padding: 0.5rem 0"><b>${k}:</b> ${v}</li>`
+            return `<div class="col-md-12 col-lg-6 mt-2"><b>${k}:</b> ${v}</div>`
         }
     }).join('')
 
@@ -115,13 +121,13 @@ function makeHistoryCard(cursor) {
         <div class="col-4" style="padding: 1rem">
             <div class="card" id="${json.id}">
                 <div class="card-body">
-                    <h5 class="card-title" style="text-align: center">${json.name}</h5>
+                    <h5 class="card-title" style="text-align: center">${json.name}.${json.ext}</h5>
 
-                    <ul class="list-group list-group-flush">
+                    <div class="row">
                         ${items_html}
-                    </ul>
+                    </div>
 
-                    <video controls src="${json.url}" class="card-img mt-2 mb-3" type="${json.type}"></video>
+                    <video controls src="${json.url}" class="card-img my-3" type="${json.type}"></video>
 
                     <a class="btn btn-primary float-right" href="${json.url}">Download</a>
                 </div>
@@ -151,7 +157,7 @@ function readTable() {
                     var cursor = event.target.result
                     
                     if (cursor) {
-                        console.log('Cursor:', cursor)
+                        // console.log('Cursor:', cursor)
                         const card = makeHistoryCard(cursor)
 
                         container.innerHTML = card.html + container.innerHTML
