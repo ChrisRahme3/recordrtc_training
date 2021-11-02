@@ -97,9 +97,10 @@ function makeHistoryCard(cursor) {
         url          : URL.createObjectURL(cursor.value)
     }
 
-    const date = json.name.split('_')[0]
-    const time = json.name.split('_')[1].replace(/-/g, ':')
-    const datetime = moment(date + ' ' + time)
+    const datetime = moment(
+        json.name.split('_')[0] + ' ' +
+        json.name.split('_')[1].replace(/-/g, ':')
+    )
 
     const items_object = {
         'Date': datetime.format('DD MMM YYYY'),
@@ -115,13 +116,13 @@ function makeHistoryCard(cursor) {
         if (v) {
             return `<div class="col-md-12 col-lg-6 mt-2"><b>${k}:</b> ${v}</div>`
         }
-    }).join('')
+    }).join('\n')
 
     const html = `
         <div class="col-4" style="padding: 1rem">
             <div class="card" id="${json.id}">
                 <div class="card-body">
-                    <h5 class="card-title" style="text-align: center">${json.name}.${json.ext}</h5>
+                    <h5 class="card-title card-header" style="text-align: center; padding-top: 0; padding-bottom: 1rem">${json.name}.${json.ext}</h5>
 
                     <div class="row">
                         ${items_html}
