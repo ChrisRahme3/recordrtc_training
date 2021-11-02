@@ -99,12 +99,12 @@ function makeHistoryCard(cursor) {
 
     const datetime = moment(
         json.name.split('_')[0] + ' ' +
-        json.name.split('_')[1].replace(/-/g, ':')
+        json.name.split('_')[1].replace('-', ':').replace('-', ':').replace('-', '.')
     )
 
     const items_object = {
         'Date': datetime.format('DD MMM YYYY'),
-        'Time': datetime.format('hh:mm:ss A'),
+        'Time': datetime.format('hh:mm A'),
         'Format': json.ext.toUpperCase(),
         'Size': formatBytes(json.size),
         'Resolution': json.resolution,
