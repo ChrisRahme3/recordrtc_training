@@ -65,7 +65,7 @@
                     </select>
                 </div>
 
-                <div class="col">
+                <div class="col hidden">
                     <label for="media-resolution" class="form-label">Bitrate</label>
                     <select id="media-bitrate" class="form-select">
                         <option value="default" selected>Default</option>
@@ -91,6 +91,7 @@
 
             <div id="recording-info" class="col-3">
                 <div id="recording-control">
+                    <h6>Recording Controls:</h6>
                     <button id="btn-start"    class="btn btn-success"       >Start   </button>
                     <button id="btn-download" class="btn btn-primary hidden">Download</button>
                     <button id="btn-upload"   class="btn btn-warning hidden">Upload  </button>
@@ -244,7 +245,7 @@
 
         var media_element = getHTMLMediaElement(video, {
             // title: 'Recording inactive',
-            buttons: ['full-screen', 'volume-slider', 'mute-audio'],
+            buttons: [], // ['full-screen', 'volume-slider', 'mute-audio']
             showOnMouseEnter: true,
             // width: 720,
         })
@@ -256,6 +257,7 @@
         var media_element_container = document.createElement('section')
 
         media_element.media.muted = false // video
+        // media_element.media.controls = true
         media_element.media.autoplay = true
         media_element.media.playsinline = true
         media_element.media.id = 'media-element-media'
@@ -598,6 +600,8 @@
 
                     recordingStatus.innerHTML = 'Stopped<br><br>' +
                         '<i>Size: ' + formatBytes(rec_data.recording.getBlob().size) + '</i>'
+
+                    media_element_container.children[0].controls = true
                 })
             }
         } // END function stopRecording
