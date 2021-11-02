@@ -11,20 +11,14 @@ function formatBytes(bytes, decimals = 2, k = 1024) {
 
 
 function makeFileName(fileExtension) {
-    var z  = n =>  ('0' + n).slice(-2)
+    var z  = n => ('0'  + n).slice(-2)
     var zz = n => ('00' + n).slice(-3)
 
     var d = new Date()
-
-    var off = d.getTimezoneOffset()
-
-    var sign = off > 0? '-' : '+'
-    off = Math.abs(off)
-
-    d = d.getFullYear() + '-' +
+    d = d.getFullYear()   + '-' +
         z(d.getMonth()+1) + '-' +
-        z(d.getDate()) + '_' +
-        z(d.getHours()) + '-'  + 
+        z(d.getDate())    + '_' +
+        z(d.getHours())   + '-' + 
         z(d.getMinutes()) + '-' +
         z(d.getSeconds()) + '-' +
         zz(d.getMilliseconds())
