@@ -276,7 +276,6 @@
                 [isMimeTypeSupported('video/x-matroska;codecs=avc1'), 'mkv'        ],
                 [true,                                                'vp8'        ],
                 [isMimeTypeSupported('video/webm\;codecs=vp9'),       'vp9'        ],
-                [true,                                                'gif'        ],
                 [DetectRTC.browser.name == 'Chrome',                  'whammy'     ],
                 [DetectRTC.browser.name == 'Chrome',                  'WebAssembly'],
             ]
@@ -357,7 +356,7 @@
                     btnStart.onclick()
                 })
 
-                setVideoURL(screenStream, true)
+                setVideoURL(screenStream)
             } // END subfunction commonThen
 
 
@@ -529,17 +528,11 @@
                 ['vp8',         'video/webm\;codecs=vp8',       'webm', null,                'video'],
                 ['vp9',         'video/webm\;codecs=vp9',       'webm', null,                'video'],
                 ['default',     'video/webm',                   'webm', null,                'video'],
-                ['gif',         'image/gif',                    'gif',  GifRecorder,         'gif'  ],
-                ['pcm',         'audio/wav',                    'wav',  StereoAudioRecorder, 'audio'],
-                ['opus',        'audio/webm',                   'webm', null,                'audio'],
-                ['opus',        'audio/ogg; codecs=opus',       'ogg',  null,                'audio'],
-                ['ogg',         'audio/webm',                   'webm', null,                'audio'],
-                ['ogg',         'audio/ogg; codecs=opus',       'ogg',  null,                'audio'],
             ]
 
             checks.forEach(function (check) {
                 if (mediaContainerFormat.value === check[0] && isMimeTypeSupported(check[1])) {
-                    if (check.length > 1) mime_type      = check[1]
+                    if (check.length > 1) mime_type     = check[1]
                     if (check.length > 2) fileExtension = check[2]
                     if (check.length > 3) recorderType  = check[3]
                     if (check.length > 4) type          = check[4]
@@ -895,16 +888,12 @@
         } // END function saveUrlToDisk
 
 
-        function setVideoURL(arg, forceNonImage) {
+        function setVideoURL(arg) {
             var parentNode = recordingPlayer.parentNode
             parentNode.removeChild(recordingPlayer)
             parentNode.innerHTML = ''
 
-            var elem = (type == 'gif' && !forceNonImage) ? 'img'
-                : (type == 'audio') ? 'audio'
-                : 'video'
-
-            recordingPlayer = document.createElement(elem)
+            recordingPlayer = document.createElement('video')
             recordingPlayer.muted = (arg instanceof MediaStream)
 
             recordingPlayer.addEventListener('loadedmetadata', function() {
