@@ -112,7 +112,7 @@
     <script> // Global variables
         const MY_DOMAIN = 'webrtc-experiment.com' // TODO
 
-        var mimeType      = 'video/webm'
+        var mime_type      = 'video/webm'
         var fileExtension = 'webm'
         var type          = 'video'
 
@@ -191,7 +191,7 @@
         }
     
         
-        function isMimeTypeSupported(mimeType) {
+        function isMimeTypeSupported(mime_type) {
             if (typeof MediaRecorder === 'undefined') {
                 return false
             }
@@ -200,7 +200,7 @@
                 return true
             }
 
-            return MediaRecorder.isTypeSupported(mimeType)
+            return MediaRecorder.isTypeSupported(mime_type)
         } // END function isMimeTypeSupported
     
 
@@ -216,7 +216,7 @@
 
         function mediaRecorderToStringify(mediaRecorder) {
             var result = `
-                mimeType: ${mediaRecorder.mimeType},
+                mime_type: ${mediaRecorder.mime_type},
                 state: ${mediaRecorder.state},
                 audioBitsPerSecond: ${mediaRecorder.audioBitsPerSecond},
                 media_bitrate: ${mediaRecorder.media_bitrate}`
@@ -481,9 +481,13 @@
     
     
         function getMediaConstraints() {
+            let temp_constraints = media_constraints
+
             setBitrate()
-            media_constraints = getVideoResolutions(media_constraints)
-            media_constraints = getFrameRates(media_constraints)
+            temp_constraints = getVideoResolutions(temp_constraints)
+            temp_constraints = getFrameRates(temp_constraints)
+
+            return temp_constraints
         } // END function getMediaConstraints
     </script>
 
@@ -527,7 +531,7 @@
                 }
             }
 
-            const check_conditions = [mediaContainerFormat.value, mimeType, fileExtension, recorderType, type]
+            const check_conditions = [mediaContainerFormat.value, mime_type, fileExtension, recorderType, type]
             const checks = [
                 ['h264',        'video/mpeg',                   'mp4'],
                 ['h264',        'video/webm\;codecs=h264',      'mp4'],
@@ -549,7 +553,7 @@
 
             checks.forEach(function (check) {
                 if (mediaContainerFormat.value === check[0] && isMimeTypeSupported(check[1])) {
-                    if (check.length > 1) mimeType      = check[1]
+                    if (check.length > 1) mime_type      = check[1]
                     if (check.length > 2) fileExtension = check[2]
                     if (check.length > 3) recorderType  = check[3]
                     if (check.length > 4) type          = check[4]
@@ -565,7 +569,7 @@
             btnStart.mediaCapturedCallback = function () {
                 var options = {
                     type: type,
-                    mimeType: mimeType,
+                    mimeType: mime_type,
                     disableLogs: params.disableLogs || false,
                     getNativeBlob: true, // enable it for longer recordings,
                     ignoreMutedMedia: true,
@@ -602,35 +606,22 @@
             btnStart.classList.replace('btn-danger', 'btn-success')
 
             function stopStream() {
-                if (btnStart.stream && btnStart.stream.stop) {
-                    btnStart.stream.stop()
-                    btnStart.stream = null
-                }
-
-                media_bitrate = null
-                recordingStatus.innerHTML = 'Stopped<br><br>' +
-                    '<i>Size: ' + formatBytes(recording.getBlob().size) + '</i>'
+                
             }
 
             if (recording) {
                 recording.stopRecording(function(url) {
-                    if (btnStart.blobs && btnStart.blobs.length) {
-                        const blob = new File(
-                            btnStart.blobs,
-                            makeFileName(fileExtension),
-                            {type: mimeType}
-                        )
-                        
-                        recording.getBlob = function() {
-                            return blob
-                        }
+                    btnStart.recordingEndedCallback(url)
 
-                        url = URL.createObjectURL(blob)
+                    downloadVideo(recording)
+
+                    if (btnStart.stream && btnStart.stream.stop) {
+                        btnStart.stream.stop()
+                        btnStart.stream = null
                     }
 
-                    btnStart.recordingEndedCallback(url)
-                    downloadVideo(recording)
-                    stopStream()
+                    recordingStatus.innerHTML = 'Stopped<br><br>' +
+                        '<i>Size: ' + formatBytes(recording.getBlob().size) + '</i>'
                 })
             }
         } // END function stopRecording
@@ -680,8 +671,8 @@
                 info += '\nrecorderType: ' + recorderType.name
             }
 
-            if (typeof mimeType !== 'undefined') {
-                info += '\nmimeType: ' + mimeType
+            if (typeof mime_type !== 'undefined') {
+                info += '\nmime_type: ' + mime_type
             }
 
             Array.prototype.slice.call(document.querySelectorAll('select')).forEach(function(select) {
@@ -753,32 +744,35 @@
                 }
             }
 
-            var fileName = makeFileName(fileExtension)
+            var filename = makeFileName(fileExtension)
 
             btnDownload.style.display = ''
-            btnUpload.style.display = ''
+            //btnUpload.style.display = ''
 
             btnDownload.onclick = function(event) {
                 event.preventDefault()
 
                 if (!recordRTC) return alert('No recording found.')
 
-                const blob = recording.getBlob()
-                blob.constraints = media_constraints
+                const filename = makeFileName(fileExtension)
 
-                var file = new File(
+                let blob = new Blob(
+                    [recording.getBlob()],
+                    {type: mime_type}
+                )
+
+                let file = new File(
                     [blob],
-                    fileName,
-                    {type: mimeType}
+                    filename,
+                    {type: mime_type}
                 )
 
                 invokeSaveAsDialog(file, file.name)
+                addRecordingToDatabase(blob, filename)
 
                 recordingStatus.innerHTML = 'Downloaded<br><br><i>' +
                     'Size: ' + formatBytes(blob.size) + '<br>' +
-                    'Name: ' + fileName + '</i>'
-
-                addRecordingToDatabase(blob, fileName)
+                    'Name: ' + filename + '</i>'
             }
 
             // upload to PHP server
@@ -803,19 +797,19 @@
 
                 var button = this
 
-                uploadVideo(fileName, recordRTC, function(progress, fileURL) {
+                uploadVideo(filename, recordRTC, function(progress, fileURL) {
                     if (progress === 'ended') {
                         button.disabled = false
                         button.innerHTML = 'Click to download from server'
                         button.onclick = function(event) {
                             event.preventDefault()
-                            saveUrlToDisk(fileURL, fileName)
+                            saveUrlToDisk(fileURL, filename)
                         }
 
                         setVideoURL(fileURL)
 
                         recordingStatus.innerHTML = 'Uploaded<br><br>' +
-                            `<i><a href="${fileURL}" download="${fileName}">${fileName}</a></i>`
+                            `<i><a href="${fileURL}" download="${filename}">${filename}</a></i>`
                         return
                     }
 
@@ -826,16 +820,18 @@
         } // END function downloadVideo
 
 
-        function uploadVideo(fileName, recordRTC, callback) {
-            var blob = recordRTC instanceof Blob ? recordRTC : recordRTC.getBlob()
+        function uploadVideo(filename, recordRTC, callback) {
+            var blob = recordRTC instanceof Blob ? recordRTC : Object.assign(media_constraints, recordRTC.getBlob())
             
-            blob = new File([blob], makeFileName(fileExtension), {
-                type: mimeType
-            })
+            blob = new File(
+                [blob],
+                makeFileName(fileExtension),
+                Object.assign(media_constraints.video.mandatory, {type: mime_type, bitrate: media_bitrate})
+            )
 
             // create FormData
             var formData = new FormData()
-            formData.append('video-filename', fileName)
+            formData.append('video-filename', filename)
             formData.append('video-blob', blob)
 
             callback('Uploading to server')
@@ -852,7 +848,7 @@
                     return
                 }
 
-                callback('ended', upload_directory + fileName)
+                callback('ended', upload_directory + filename)
             })
         } // END function uploadVideo
 
@@ -897,11 +893,11 @@
         } // END function makeXMLHttpRequest
 
 
-        function saveUrlToDisk(fileUrl, fileName) {
+        function saveUrlToDisk(fileUrl, filename) {
             var hyperlink = document.createElement('a')
             hyperlink.href = fileUrl
             hyperlink.target = '_blank'
-            hyperlink.download = fileName || fileUrl
+            hyperlink.download = filename || fileUrl
 
             var doc = (document.body || document.documentElement)
             doc.appendChild(hyperlink)

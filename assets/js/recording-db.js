@@ -1,6 +1,7 @@
 window.indexedDB      = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB
 window.IDBTransaction = window.IDBTransaction || window.webkitIDBTransaction || window.msIDBTransaction
 window.IDBKeyRange    = window.IDBKeyRange || window.webkitIDBKeyRange || window.msIDBKeyRange
+window.URL            = window.URL || window.webkitURL
 
 
 if (!window.indexedDB) {
@@ -8,8 +9,8 @@ if (!window.indexedDB) {
 }
 
 
-const dbName  = 'record-db-temp'
-const dbTable = 'recordings'
+const dbName  = 'record-db-temp21314gdfgdfdghfdghfsdasduygasfssdfsdaadas5624'
+const dbTable = 'recordings-fasfdsshdhdasd'
 
 var request  = window.indexedDB.open(dbName, 1)
 var allEntries = []
@@ -21,13 +22,13 @@ var db
 request.onupgradeneeded = function(event) {
     db = event.target.result
     db.createObjectStore(dbTable)
-    console.log('Database upgraded:', db)
+    // console.log('Database upgraded:', db)
 }
 
 
 request.onsuccess = function(event) {
     db = request.result
-    console.log('Database:', db)
+    // console.log('Database:', db)
 }
 
 
@@ -42,11 +43,15 @@ function addRecordingToDatabase(blob, id) {
 
     try {
         const store = db.transaction([dbTable], 'readwrite').objectStore(dbTable)
+        var video_url = window.URL.createObjectURL(blob)
 
-        let request = store.add(blob, id)
+        let reblob = Object.assign(blob, {url: video_url})
+
+        let request = store.add(reblob, id)
 
         request.onsuccess = function (event) {
-            console.log('Recording added to database.')
+            // console.log('Recording added to database:', video_url)
+            document.getElementById('recording-status').innerHTML += `<br><i>URL: <a href="${video_url}">Click here</a></i>`
         }
 
         request.onerror = function (error) {
@@ -84,26 +89,42 @@ function makeHistoryCard(cursor) {
         id           : cursor.key,
         name         : name_parts[0],
         ext          : name_parts[1],
-        size         : cursor.value.size,
-        display_size : formatBytes(cursor.value.size)
+        type         : (cursor.value.type) ? `${cursor.value.type}` : null,
+        size         : (cursor.value.size) ? `${cursor.value.size}` : null,
+        resolution   : (cursor.value.maxWidth && cursor.value.maxHeight) ? `${cursor.value.maxWidth}x${cursor.value.maxHeight}` : null,
+        framerate    : (cursor.value.maxFrameRate) ? `${cursor.value.maxFrameRate} FPS` : null,
+        bitrate      : (cursor.value.bitrate) ? `${cursor.value.bitrate} B/s` : null,
+        url          : URL.createObjectURL(cursor.value)
     }
+
+    const items_object = {
+        'Format': json.ext.toUpperCase(),
+        'Size': formatBytes(json.size),
+        'Resolution': json.resolution,
+        'Framerate': json.framerate,
+        'Bitrate': json.bitrate,
+    }
+
+    const items_html = Object.entries(items_object).map(function ([k, v], i) {
+        if (v) {
+            return `<li class="list-group-item" style="padding: 0.5rem 0"><b>${k}:</b> ${v}</li>`
+        }
+    }).join('')
 
     const html = `
         <div class="col-4" style="padding: 1rem">
             <div class="card" id="${json.id}">
                 <div class="card-body">
                     <h5 class="card-title" style="text-align: center">${json.name}</h5>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item" style="padding: 0.5rem 0">
-                            <b>Format:</b> ${json.ext}
-                        </li>
-                        <li class="list-group-item" style="padding: 0.5rem 0">
-                            <b>Size:</b> ${json.display_size}
-                        </li>
-                    </ul>
-                </div>
 
-                <img src="https://i.picsum.photos/id/315/2100/1500.jpg?hmac=-04N-t7k_WwNeI30ryvWT4KGzy7XVdsw41fNRDFizck" class="card-img-bottom" alt="...">
+                    <ul class="list-group list-group-flush">
+                        ${items_html}
+                    </ul>
+
+                    <video controls src="${json.url}" class="card-img mt-2 mb-3" type="${json.type}"></video>
+
+                    <a class="btn btn-primary float-right" href="${json.url}">Download</a>
+                </div>
             </div>
         </div>
     `
@@ -133,7 +154,7 @@ function readTable() {
                         console.log('Cursor:', cursor)
                         const card = makeHistoryCard(cursor)
 
-                        container.innerHTML += card.html
+                        container.innerHTML = card.html + container.innerHTML
                         allEntries.push(card.json)
 
                         cursor.continue()
@@ -150,7 +171,7 @@ function readTable() {
                         const found = allEntries.some(el => el.id === card.json.id)
 
                         if (!found) {
-                            container.innerHTML += card.html
+                            container.innerHTML = card.html + container.innerHTML
                             allEntries.push(card.json)
                         }
 
