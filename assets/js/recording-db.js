@@ -134,10 +134,12 @@ function makeHistoryCard(cursor) {
                     </video>
 
                     <a class="btn btn-primary float-right" href="${json.url}" download="${json.id}">
+                        <i class="fas fa-download"></i>
                         Download
                     </a>
 
                     <button class="btn btn-danger float-right mx-3" onclick="deleteKey('${json.id}')">
+                        <i class="fas fa-trash"></i>
                         Delete
                     </a>
                 </div>

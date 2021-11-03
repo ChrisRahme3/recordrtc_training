@@ -43,9 +43,14 @@ main select {
 
 
 
-#recording-control button {
+#recording-control .btn {
     width: 100%;
     margin-bottom: 1rem;
+}
+
+#recording-control .btn i,
+.recording-card .btn i {
+    transform: scale(0.75);
 }
 
 
