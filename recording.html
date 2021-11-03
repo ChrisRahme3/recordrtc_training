@@ -93,6 +93,7 @@
                 <div id="recording-control">
                     <h6>Recording Controls:</h6>
                     <button id="btn-start"    class="btn btn-success"       >Start   </button>
+                    <button id="btn-save"     class="btn btn-primary hidden">Save    </button>
                     <button id="btn-download" class="btn btn-primary hidden">Download</button>
                     <button id="btn-upload"   class="btn btn-warning hidden">Upload  </button>
                 </div>
@@ -314,6 +315,7 @@
         var mediaContainerFormat = document.querySelector('#media-format')
         var btnStart             = document.querySelector('#btn-start')
         var btnDownload          = document.querySelector('#btn-download')
+        var btnSave              = document.querySelector('#btn-save')
         var btnUpload            = document.querySelector('#btn-upload')
         var recordingStatus      = document.querySelector('#recording-status')
     </script>
@@ -521,6 +523,8 @@
             btnStart.classList.replace('btn-success', 'btn-danger')
 
             btnDownload.classList.add('hidden')
+            btnSave.classList.add('hidden')
+            btnUpload.classList.add('hidden')
 
             const check_conditions = [mediaContainerFormat.value, mime_type, fileExtension, recorderType]
             const checks = [
@@ -585,13 +589,14 @@
             btnStart.innerHTML = 'Start'
             btnStart.classList.replace('btn-danger', 'btn-success')
             btnDownload.classList.remove('hidden')
+            btnSave.classList.remove('hidden')
             //btnUpload.classList.remove('hidden')
 
             if (rec_data.recording) {
                 rec_data.recording.stopRecording(function(url) {
                     btnStart.recordingEndedCallback(url)
 
-                    downloadVideo(rec_data.recording)
+                    readyDownload()
 
                     if (rec_data.stream && rec_data.stream.stop) {
                         rec_data.stream.stop()
@@ -707,12 +712,44 @@
         } // END function getFailureReport
 
 
-        function downloadVideo(recordRTC) {
-            if (!recordRTC.getBlob().size) {
+        function saveVideo(event, download = false) {
+            if (event) event.preventDefault()
+
+            if (!rec_data.recording) return alert('No recording found.')
+
+            const filename = makeFileName(fileExtension)
+
+            let blob = new Blob(
+                [rec_data.recording.getBlob()],
+                {type: mime_type}
+            )
+
+            if (download) {
+                let file = new File(
+                    [blob],
+                    filename,
+                    {type: mime_type}
+                )
+
+                invokeSaveAsDialog(file, file.name)
+            } else {
+                addRecordingToDatabase(blob, filename)
+
+                btnSave.classList.add('hidden')
+            }
+
+            recordingStatus.innerHTML = (download ? 'Downloaded' : 'Saved') + '<br><br><i>' +
+                'Size: ' + formatBytes(blob.size) + '<br>' +
+                'Name: ' + filename + '</i>'
+        } // END function saveVideo
+
+
+        function readyDownload() {
+            if (!rec_data.recording.getBlob().size) {
                 var info = getFailureReport()
 
-                console.error('blob', recordRTC.getBlob())
-                console.error('recordrtc instance', recordRTC)
+                console.error('blob', rec_data.recording.getBlob())
+                console.error('recordrtc instance', rec_data.recording)
                 console.error('report', info)
 
                 if (mediaContainerFormat.value !== 'default') {
@@ -724,32 +761,12 @@
                 }
             }
 
-            var filename = makeFileName(fileExtension)
-
             btnDownload.onclick = function(event) {
-                if (event) event.preventDefault()
+                saveVideo(event, true)
+            }
 
-                if (!recordRTC) return alert('No recording found.')
-
-                const filename = makeFileName(fileExtension)
-
-                let blob = new Blob(
-                    [rec_data.recording.getBlob()],
-                    {type: mime_type}
-                )
-
-                let file = new File(
-                    [blob],
-                    filename,
-                    {type: mime_type}
-                )
-
-                invokeSaveAsDialog(file, file.name)
-                addRecordingToDatabase(blob, filename)
-
-                recordingStatus.innerHTML = 'Downloaded<br><br><i>' +
-                    'Size: ' + formatBytes(blob.size) + '<br>' +
-                    'Name: ' + filename + '</i>'
+            btnSave.onclick = function(event) {
+                saveVideo(event, false)
             }
 
             // upload to PHP server
@@ -774,6 +791,8 @@
 
                 var button = this
 
+                const filename = makeFileName(fileExtension)
+
                 uploadVideo(filename, recordRTC, function(progress, fileURL) {
                     if (progress === 'ended') {
                         button.disabled = false
@@ -794,7 +813,7 @@
                     recordingStatus.innerHTML = progress
                 })
             }
-        } // END function downloadVideo
+        } // END function readyDownload
 
 
         function uploadVideo(filename, recordRTC, callback) {
