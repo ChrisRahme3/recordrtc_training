@@ -31,7 +31,7 @@
 </head>
 
 <body>
-    <main class="container my-5">
+    <main class="mx-5 my-5">
         <form id="selectors" class="mb-5">
             <div class="row">
                 <div class="col">
@@ -419,7 +419,7 @@
 
 
         btnStart.onclick = function(event) {
-            event.preventDefault()
+            if (event) event.preventDefault()
             
             if (btnStart.innerHTML === 'Stop') { // Stop button
                 stopRecording()
@@ -727,7 +727,7 @@
             var filename = makeFileName(fileExtension)
 
             btnDownload.onclick = function(event) {
-                event.preventDefault()
+                if (event) event.preventDefault()
 
                 if (!recordRTC) return alert('No recording found.')
 
@@ -761,7 +761,7 @@
             }
             
             btnUpload.onclick = function(event) {
-                event.preventDefault()
+                if (event) event.preventDefault()
 
                 if (isMyOwnDomain()) {
                     alert('PHP Upload is not available on this domain.')
@@ -779,7 +779,7 @@
                         button.disabled = false
                         button.innerHTML = 'Click to download from server'
                         button.onclick = function(event) {
-                            event.preventDefault()
+                            if (event) event.preventDefault()
                             saveUrlToDisk(fileURL, filename)
                         }
 
@@ -880,7 +880,7 @@
             doc.appendChild(hyperlink)
 
             hyperlink.onclick = function(event) {
-                event.preventDefault()
+                if (event) event.preventDefault()
                 doc.removeChild(hyperlink)
                 window.URL.revokeObjectURL(hyperlink.href)
             }
