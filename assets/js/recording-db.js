@@ -43,7 +43,7 @@ function addRecordingToDatabase(blob, id) {
 
     try {
         const store = db.transaction([dbTable], 'readwrite').objectStore(dbTable)
-        var video_url = window.URL.createObjectURL(blob)
+        let video_url = window.URL.createObjectURL(blob)
 
         let reblob = Object.assign(blob, {url: video_url})
 
@@ -106,7 +106,7 @@ function makeHistoryCard(cursor) {
         'Date': datetime.format('DD MMM YYYY'),
         'Time': datetime.format('hh:mm A'),
         'Format': json.ext.toUpperCase(),
-        'Size': formatBytes(json.size),
+        'Size': formatBytes(json.size, 1024),
         'Resolution': json.resolution,
         'Framerate': json.framerate,
         'Bitrate': json.bitrate,
@@ -119,18 +119,27 @@ function makeHistoryCard(cursor) {
     }).join('\n')
 
     const html = `
-        <div class="col-4" style="padding: 1rem">
-            <div class="card" id="${json.id}">
+        <div id="${json.id}" class="recording-card col-6 col-md-4 col-lg-3">
+            <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title card-header" style="text-align: center; padding-top: 0; padding-bottom: 1rem">${json.name}.${json.ext}</h5>
+                    <h5 class="card-title card-header">
+                        ${json.name}.${json.ext}
+                    </h5>
 
                     <div class="row">
                         ${items_html}
                     </div>
 
-                    <video controls src="${json.url}" class="card-img my-3" type="${json.type}"></video>
+                    <video controls class="card-img my-3" src="${json.url}" type="${json.type}">
+                    </video>
 
-                    <a class="btn btn-primary float-right" href="${json.url}" download="${json.id}">Download</a>
+                    <a class="btn btn-primary float-right" href="${json.url}" download="${json.id}">
+                        Download
+                    </a>
+
+                    <button class="btn btn-danger float-right mx-3" onclick="deleteKey('${json.id}')">
+                        Delete
+                    </a>
                 </div>
             </div>
         </div>
@@ -149,13 +158,11 @@ function readTable() {
 
     return new Promise(resolve => {
         open.onsuccess = evt => {
-            let db = open.result
-            let tran = db.transaction(dbTable)
-            let objectStore = tran.objectStore(dbTable)
+            const store = open.result.transaction(dbTable).objectStore(dbTable)
 
             if (allEntries.length == 0) {
-                objectStore.openCursor().onsuccess = function (event) {
-                    var cursor = event.target.result
+                store.openCursor().onsuccess = function (event) {
+                    const cursor = event.target.result
                     
                     if (cursor) {
                         // console.log('Cursor:', cursor)
@@ -168,10 +175,10 @@ function readTable() {
                     }
                 }
             } else { // allEntries.length != 0
-                var newEntries = []
+                let newEntries = []
 
-                objectStore.openCursor().onsuccess = function (event) {
-                    var cursor = event.target.result
+                store.openCursor().onsuccess = function (event) {
+                    const cursor = event.target.result
 
                     if (cursor) {
                         const card = makeHistoryCard(cursor)
@@ -190,7 +197,7 @@ function readTable() {
                             const found = newEntries.some(el => el.call_id === obj.call_id)
 
                             if (!found) {
-                                var temp_elem = document.getElementById(obj.call_id)
+                                let temp_elem = document.getElementById(obj.call_id)
 
                                 temp_elem.className += " removed"
 
@@ -204,4 +211,25 @@ function readTable() {
             }
         }
     })
+}
+
+
+
+function deleteKey(key) {
+    try {
+        const store = db.transaction(dbTable, 'readwrite').objectStore(dbTable)
+
+        let request = store.delete(key)
+
+        request.onsuccess = function (event) {
+            document.getElementById(key).remove()
+            console.log('Recording deleted from database:', key)
+        }
+
+        request.onerror = function (error) {
+            console.error('Error while deleting from database:', error)
+        }
+    } catch (exception) {
+        console.error('Error while deleting from database:', error)
+    }
 }
