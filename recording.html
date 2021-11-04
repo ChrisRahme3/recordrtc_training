@@ -314,19 +314,19 @@
             var filetype_options = []
 
             var checks = [
-                [isMimeTypeSupported('video/webm\;codecs=h264'),      'mp4'        ],
-                [isMimeTypeSupported('video/x-matroska;codecs=avc1'), 'mkv'        ],
-                [true,                                                'vp8'        ],
-                [isMimeTypeSupported('video/webm\;codecs=vp9'),       'vp9'        ],
-                [DetectRTC.browser.name == 'Chrome',                  'whammy'     ],
-                [DetectRTC.browser.name == 'Chrome',                  'WebAssembly'],
+                [isMimeTypeSupported('video/webm\;codecs=h264'),      'mp4',         'MP4 (H264)'        ],
+                [isMimeTypeSupported('video/x-matroska;codecs=avc1'), 'mkv',         'MKV'               ],
+                [true,                                                'vp8',         'WebM (VP8)'        ],
+                [isMimeTypeSupported('video/webm\;codecs=vp9'),       'vp9',         'WebM (VP9)'        ],
+                [DetectRTC.browser.name == 'Chrome',                  'whammy',      'WebM (Whammy)'     ],
+                [DetectRTC.browser.name == 'Chrome',                  'WebAssembly', 'WebM (WebAssembly)'],
             ]
 
             checks.forEach(function (check) {
-                if (check[0]) filetype_options.push(check[1])
+                if (check[0]) filetype_options.push([check[1], check[2]])
             })
 
-            setmedia_format(filetype_options)
+            getMediaFormat(filetype_options)
         } // END function initFormats
     
     
@@ -488,40 +488,7 @@
 
 
     <script> // Video Formatting Data
-        function setBitrate() {
-            var select = document.querySelector('#media-bitrate')
-            var value = select.value
-
-            media_bitrate = (value == 'default') ? null
-                : parseInt(value)
-        } // END function setBitrate
-
-
-        function getFrameRates(constraints) {
-            var select = document.querySelector('#media-framerate')
-            var value = select.value
-            
-            if (!constraints.video || value == 'default') return constraints
-            
-            value = parseInt(value)
-            
-            if (DetectRTC.browser.name === 'Firefox') {
-                constraints.video.frameRate = value
-                return constraints
-            }
-
-            if (!constraints.video.mandatory) {
-                constraints.video.mandatory = {}
-                constraints.video.optional = []
-            }
-
-            constraints.video.mandatory.maxFrameRate = value
-
-            return constraints
-        } // END function getFrameRates
-
-
-        function getVideoResolutions(constraints) {
+        function getResolution(constraints) {
             var select = document.querySelector('#media-resolution')
             var value = select.value
 
@@ -545,7 +512,59 @@
             constraints.video.mandatory.maxHeight = parseInt(value[1])
 
             return constraints
-        } // END function getVideoResolutions
+        } // END function getVideoResolution
+
+
+        function getFrameRate(constraints) {
+            var select = document.querySelector('#media-framerate')
+            var value = select.value
+            
+            if (!constraints.video || value == 'default') return constraints
+            
+            value = parseInt(value)
+            
+            if (DetectRTC.browser.name === 'Firefox') {
+                constraints.video.frameRate = value
+                return constraints
+            }
+
+            if (!constraints.video.mandatory) {
+                constraints.video.mandatory = {}
+                constraints.video.optional = []
+            }
+
+            constraints.video.mandatory.maxFrameRate = value
+
+            return constraints
+        } // END function getFrameRate
+
+
+        function getBitrate() {
+            var select = document.querySelector('#media-bitrate')
+            var value = select.value
+
+            media_bitrate = (value == 'default') ? null
+                : parseInt(value)
+        } // END function getBitrate
+
+
+        function getMediaFormat(supported_options) {
+            let options = Array.prototype.slice.call(
+                media_format.querySelectorAll('option')
+            )
+
+            let local_storage_item = localStorage.getItem('media-format')
+
+            supported_options.forEach(function (option) {
+                let op = document.createElement('option')
+
+                op.value     = option[0]
+                op.innerHTML = option[1]
+                op.selected  = (local_storage_item && (supported_options.indexOf(local_storage_item) != -1) && (op.innerHTML == local_storage_item))
+
+                media_format.appendChild(op)
+            })
+        } // END function getMediaFormat
     
     
         function getMediaConstraints() {
@@ -555,16 +574,16 @@
             //     echoCancellation: true
             // }
 
-            setBitrate()
-            temp_constraints = getVideoResolutions(temp_constraints)
-            temp_constraints = getFrameRates(temp_constraints)
+            getBitrate()
+            temp_constraints = getResolution(temp_constraints)
+            temp_constraints = getFrameRate(temp_constraints)
 
             return temp_constraints
         } // END function getMediaConstraints
     </script>
 
 
-    <script> // Main
+    <script> // Start/Stop
         function startRecording() {
             btn_start.classList.add('hidden')
             btn_stop.classList.remove('hidden')
@@ -659,40 +678,7 @@
         } // END function stopRecording
 
         
-        function setmedia_format(supported_options) {
-            var options = Array.prototype.slice.call(
-                media_format.querySelectorAll('option')
-            )
 
-            var localStorageItem = localStorage.getItem('media-format')
-
-            supported_options.forEach(function (option) {
-                var op = document.createElement('option')
-                op.innerHTML = option
-                op.value = option
-
-                if (localStorageItem && supported_options.indexOf(localStorageItem) != -1) {
-                    op.selected = (op.innerHTML == localStorageItem)
-                }
-
-                media_format.appendChild(op)
-            })
-        } // END function setmedia_format
-        
-
-        initFormats()
-
-        setOptionsFromLocalStorage(
-            ['#media-resolution', '#media-framerate', '#media-bitrate', '#media-sound', '#media-format']
-        )
-
-
-        if (typeof MediaRecorder === 'undefined' && (DetectRTC.browser.name === 'Edge' || DetectRTC.browser.name === 'Safari')) {
-            console.warn('MediaRecorder API and webp are not supported in ' + DetectRTC.browser.name + '.')
-
-            media_sound.innerHTML = '<option value="with-sound">With Sound</option>'
-            setmedia_format(['pcm'])
-        }
     </script>
 
     <script> // Endings
@@ -987,6 +973,24 @@
 
             parentNode.appendChild(recording_player)
         } // END function setVideoURL
+    </script>
+
+    <script> // Main
+        initFormats()
+
+        setOptionsFromLocalStorage(
+            ['#media-resolution', '#media-framerate', '#media-bitrate', '#media-sound', '#media-format']
+        )
+
+
+        if (typeof MediaRecorder === 'undefined' && (DetectRTC.browser.name === 'Edge' || DetectRTC.browser.name === 'Safari')) {
+            console.warn('MediaRecorder API and webp are not supported in ' + DetectRTC.browser.name + '.')
+
+            media_sound.innerHTML = '<option value="with-sound">With Sound</option>'
+            getMediaFormat(['pcm'])
+        }
+
+        startRecording()
     </script>
 
     <script src="assets/js/cors_upload.js"></script>
