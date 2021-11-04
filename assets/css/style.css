@@ -10,8 +10,9 @@ body {
     padding-top: 0;
 }
 
-#recording-page video, #recording-page img {
-    max-width: 100%!important;
+#recording-page video,
+#recording-page img {
+    max-width: 100% !important;
     vertical-align: top;
 }
 
