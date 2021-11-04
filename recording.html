@@ -32,7 +32,7 @@
 </head>
 
 <body>
-    <main class="mx-5 my-5">
+    <main id="recording-page" class="m-5">
         <form id="selectors" class="mb-5">
             <div class="row">
                 <div class="col">
@@ -78,7 +78,7 @@
                     </select>
                 </div>
 
-                <div class="col hidden">
+                <div class="col">
                     <label for="media-resolution" class="form-label">
                         <i class="fas fa-headphones"></i>
                         Bitrate
@@ -124,7 +124,7 @@
                         Stop
                     </button>
 
-                    <button id="btn-save" class="btn btn-primary hidden">
+                    <button id="btn-save" class="btn btn-info hidden">
                         <i class="fas fa-database"></i>
                         Save
                     </button>
@@ -326,16 +326,16 @@
                 if (check[0]) filetype_options.push(check[1])
             })
 
-            setMediaContainerFormat(filetype_options)
+            setmedia_format(filetype_options)
         } // END function initFormats
     
     
-        function setGetFromLocalStorage(selectors) {
+        function setOptionsFromLocalStorage(selectors) {
             selectors.forEach(function(selector) {
-                var storageItem = selector.replace(/\.|#/g, '')
+                var storage_item = selector.replace(/\.|#/g, '')
 
-                if (localStorage.getItem(storageItem)) {
-                    document.querySelector(selector).value = localStorage.getItem(storageItem)
+                if (localStorage.getItem(storage_item)) {
+                    document.querySelector(selector).value = localStorage.getItem(storage_item)
                 }
 
                 var arr = ['change', 'blur']
@@ -343,26 +343,26 @@
                 arr.forEach(function (event) {
                     document.querySelector(selector).addEventListener(
                         event,
-                        function() {  localStorage.setItem(storageItem, document.querySelector(selector).value) },
+                        function() {  localStorage.setItem(storage_item, document.querySelector(selector).value) },
                         false
                     )
                 })
             })
-        } // END function setGetFromLocalStorage
+        } // END function setOptionsFromLocalStorage
     </script>
 
     <script> // HTML variables
-        var recordingPlayer      = media_element.media
-        var recordingMedia       = document.querySelector('#media-sound')
-        var mediaContainerFormat = document.querySelector('#media-format')
+        var recording_player = media_element.media
+        var media_sound      = document.querySelector('#media-sound')
+        var media_format     = document.querySelector('#media-format')
 
-        var btnStart             = document.querySelector('#btn-start')
-        var btnStop              = document.querySelector('#btn-stop')
-        var btnDownload          = document.querySelector('#btn-download')
-        var btnSave              = document.querySelector('#btn-save')
-        var btnUpload            = document.querySelector('#btn-upload')
+        var btn_start        = document.querySelector('#btn-start')
+        var btn_stop         = document.querySelector('#btn-stop')
+        var btn_download     = document.querySelector('#btn-download')
+        var btn_save         = document.querySelector('#btn-save')
+        var btn_upload       = document.querySelector('#btn-upload')
 
-        var recordingStatus      = document.querySelector('#recording-status')
+        var recording_status = document.querySelector('#recording-status')
     </script>
 
     <script> // Capture Functions
@@ -370,28 +370,28 @@
             var config = {
                 onMediaCaptured: function(stream) {
                     rec_data.stream = stream
-                    btnStart.mediaCapturedCallback()
+                    btn_start.mediaCapturedCallback()
 
-                    btnStart.classList.add('hidden')
-                    btnStop.classList.remove('hidden')
+                    btn_start.classList.add('hidden')
+                    btn_stop.classList.remove('hidden')
 
-                    recordingStatus.innerHTML = 'In progress'
+                    recording_status.innerHTML = 'In progress'
                 },
 
                 onMediaStopped: function() {
-                    btnStop.classList.add('hidden')
-                    btnStart.classList.remove('hidden')
+                    btn_stop.classList.add('hidden')
+                    btn_start.classList.remove('hidden')
 
-                    recordingStatus.innerHTML = 'Inactive'
+                    recording_status.innerHTML = 'Inactive'
                 },
 
                 onMediaCapturingFailed: function(error) {
                     console.error('onMediaCapturingFailed:', error)
 
-                    btnStop.classList.add('hidden')
-                    btnStart.classList.remove('hidden')
+                    btn_stop.classList.add('hidden')
+                    btn_start.classList.remove('hidden')
 
-                    recordingStatus.innerHTML = 'Failed<br><br>' + 
+                    recording_status.innerHTML = 'Failed<br><br>' + 
                         '<code>' + error + '</code>'
 
                     commonConfig.onMediaStopped()
@@ -402,7 +402,7 @@
                 config.onMediaCaptured(screenStream)
 
                 addStreamStopListener(screenStream, function() {
-                    btnStart.onclick()
+                    btn_start.onclick()
                 })
 
                 setVideoURL(screenStream)
@@ -460,24 +460,24 @@
     
     <script> // Initialization
         window.onbeforeunload = function() {
-            recordingMedia.disabled = false
-            mediaContainerFormat.disabled = false
+            media_sound.disabled = false
+            media_format.disabled = false
         }
 
 
-        btnStart.onclick = function(event) {
+        btn_start.onclick = function(event) {
             if (event) event.preventDefault()
             if (!event) return
             
             startRecording()
-        } // END btnStart.onclick
+        } // END btn_start.onclick
 
 
-        btnStop.onclick = function(event) {
+        btn_stop.onclick = function(event) {
             if (event) event.preventDefault()
             
             stopRecording()
-        } // END btnStop.onclick
+        } // END btn_stop.onclick
 
         readTable()
 
@@ -566,14 +566,14 @@
 
     <script> // Main
         function startRecording() {
-            btnStart.classList.add('hidden')
-            btnStop.classList.remove('hidden')
+            btn_start.classList.add('hidden')
+            btn_stop.classList.remove('hidden')
 
-            btnDownload.classList.add('hidden')
-            btnSave.classList.add('hidden')
-            btnUpload.classList.add('hidden')
+            btn_download.classList.add('hidden')
+            btn_save.classList.add('hidden')
+            btn_upload.classList.add('hidden')
 
-            const check_conditions = [mediaContainerFormat.value, mime_type, fileExtension, recorderType]
+            const check_conditions = [media_format.value, mime_type, fileExtension, recorderType]
             const checks = [
                 ['h264',        'video/mpeg',                   'mp4'],
                 ['h264',        'video/webm\;codecs=h264',      'mp4'],
@@ -588,23 +588,23 @@
             ]
 
             checks.forEach(function (check) {
-                if (mediaContainerFormat.value === check[0] && isMimeTypeSupported(check[1])) {
+                if (media_format.value === check[0] && isMimeTypeSupported(check[1])) {
                     if (check.length > 1) mime_type     = check[1]
                     if (check.length > 2) fileExtension = check[2]
                     if (check.length > 3) recorderType  = check[3]
                 }
             })
 
-            capture(recordingMedia.value === 'with-sound')
+            capture(media_sound.value === 'with-sound')
 
-            btnStart.mediaCapturedCallback = function () {
+            btn_start.mediaCapturedCallback = function () {
                 var options = {
                     type: 'video',
                     mimeType: mime_type,
                     disableLogs: true, //params.disableLogs || false,
                     getNativeBlob: true, // enable it for longer recordings,
                     ignoreMutedMedia: true,
-                    video: recordingPlayer
+                    video: recording_player
                 }
 
                 if (recorderType) {
@@ -622,7 +622,7 @@
                     options.media_bitrate = media_bitrate
                 }
 
-                btnStart.recordingEndedCallback = function(url) {
+                btn_start.recordingEndedCallback = function(url) {
                     setVideoURL(url)
                 }
 
@@ -633,15 +633,15 @@
 
 
         function stopRecording() {
-            btnStop.classList.add('hidden')
-            btnStart.classList.remove('hidden')
-            btnDownload.classList.remove('hidden')
-            btnSave.classList.remove('hidden')
-            //btnUpload.classList.remove('hidden')
+            btn_stop.classList.add('hidden')
+            btn_start.classList.remove('hidden')
+            btn_download.classList.remove('hidden')
+            btn_save.classList.remove('hidden')
+            //btn_upload.classList.remove('hidden')
 
             if (rec_data.recording) {
                 rec_data.recording.stopRecording(function(url) {
-                    btnStart.recordingEndedCallback(url)
+                    btn_start.recordingEndedCallback(url)
 
                     readyDownload()
 
@@ -650,7 +650,7 @@
                         rec_data.stream = null
                     }
 
-                    recordingStatus.innerHTML = 'Stopped<br><br>' +
+                    recording_status.innerHTML = 'Stopped<br><br>' +
                         '<i>Size: ' + formatBytes(rec_data.recording.getBlob().size) + '</i>'
 
                     media_element_container.children[0].controls = true
@@ -659,9 +659,9 @@
         } // END function stopRecording
 
         
-        function setMediaContainerFormat(supported_options) {
+        function setmedia_format(supported_options) {
             var options = Array.prototype.slice.call(
-                mediaContainerFormat.querySelectorAll('option')
+                media_format.querySelectorAll('option')
             )
 
             var localStorageItem = localStorage.getItem('media-format')
@@ -675,14 +675,14 @@
                     op.selected = (op.innerHTML == localStorageItem)
                 }
 
-                mediaContainerFormat.appendChild(op)
+                media_format.appendChild(op)
             })
-        } // END function setMediaContainerFormat
+        } // END function setmedia_format
         
 
         initFormats()
 
-        setGetFromLocalStorage(
+        setOptionsFromLocalStorage(
             ['#media-resolution', '#media-framerate', '#media-bitrate', '#media-sound', '#media-format']
         )
 
@@ -690,8 +690,8 @@
         if (typeof MediaRecorder === 'undefined' && (DetectRTC.browser.name === 'Edge' || DetectRTC.browser.name === 'Safari')) {
             console.warn('MediaRecorder API and webp are not supported in ' + DetectRTC.browser.name + '.')
 
-            recordingMedia.innerHTML = '<option value="with-sound">With Sound</option>'
-            setMediaContainerFormat(['pcm'])
+            media_sound.innerHTML = '<option value="with-sound">With Sound</option>'
+            setmedia_format(['pcm'])
         }
     </script>
 
@@ -782,10 +782,10 @@
             } else {
                 addRecordingToDatabase(blob, filename)
 
-                btnSave.classList.add('hidden')
+                btn_save.classList.add('hidden')
             }
 
-            recordingStatus.innerHTML = (download ? 'Downloaded' : 'Saved') + '<br><br><i>' +
+            recording_status.innerHTML = (download ? 'Downloaded' : 'Saved') + '<br><br><i>' +
                 'Size: ' + formatBytes(blob.size) + '<br>' +
                 'Name: ' + filename + '</i>'
         } // END function saveVideo
@@ -799,65 +799,59 @@
                 console.error('recordrtc instance', rec_data.recording)
                 console.error('report', info)
 
-                if (mediaContainerFormat.value !== 'default') {
-                    alert('Recording failed using ' + mediaContainerFormat.value + '. Please choose "default" option from the drop down and record again.')
+                if (media_format.value !== 'default') {
+                    alert('Recording failed using ' + media_format.value + '. Please choose "default" option from the drop down and record again.')
                 } else {
                     alert('Recording failed. Unexpected issue. Please see console log.')
-                } if (mediaContainerFormat.value !== 'vp9' && DetectRTC.browser.name === 'Chrome') {
+                } if (media_format.value !== 'vp9' && DetectRTC.browser.name === 'Chrome') {
                     alert('Please record using VP9 format.')
                 }
             }
 
-            btnDownload.onclick = function(event) {
+            btn_download.onclick = function(event) {
                 saveVideo(event, true)
             }
 
-            btnSave.onclick = function(event) {
+            btn_save.onclick = function(event) {
                 saveVideo(event, false)
             }
 
             // upload to PHP server
             if (isMyOwnDomain()) {
-                btnUpload.disabled = true
-                btnUpload.style.display = 'none'
+                btn_upload.classList.add('hidden')
             } else {
-                btnUpload.disabled = false
+                btn_upload.classList.remove('hidden')
             }
             
-            btnUpload.onclick = function(event) {
+            btn_upload.onclick = function(event) {
                 if (event) event.preventDefault()
 
-                if (isMyOwnDomain()) {
-                    alert('PHP Upload is not available on this domain.')
-                    return
-                }
+                if (isMyOwnDomain())     return alert('PHP Upload is not available on this domain.')
+                if (!rec_data.recording) return alert('No recording found.')
 
-                if (!recordRTC) return alert('No recording found.')
-
-                this.disabled = true
-
-                var button = this
+                btn_upload.classList.add('hidden')
 
                 const filename = makeFileName(fileExtension)
 
-                uploadVideo(filename, recordRTC, function(progress, fileURL) {
+                uploadVideo(filename, rec_data.recording, function(progress, fileURL) {
                     if (progress === 'ended') {
-                        button.disabled = false
-                        button.innerHTML = 'Click to download from server'
-                        button.onclick = function(event) {
+                        btn_upload.classList.remove('hidden')
+                        btn_upload.innerHTML = 'Download from server'
+
+                        btn_upload.onclick = function(event) {
                             if (event) event.preventDefault()
                             saveUrlToDisk(fileURL, filename)
                         }
 
                         setVideoURL(fileURL)
 
-                        recordingStatus.innerHTML = 'Uploaded<br><br>' +
+                        recording_status.innerHTML = 'Uploaded<br><br>' +
                             `<i><a href="${fileURL}" download="${filename}">${filename}</a></i>`
                         return
                     }
 
-                    button.innerHTML = progress
-                    recordingStatus.innerHTML = progress
+                    btn_upload.innerHTML = progress
+                    recording_status.innerHTML = progress
                 })
             }
         } // END function readyDownload
@@ -962,36 +956,36 @@
 
 
         function setVideoURL(arg) {
-            var parentNode = recordingPlayer.parentNode
-            parentNode.removeChild(recordingPlayer)
+            var parentNode = recording_player.parentNode
+            parentNode.removeChild(recording_player)
             parentNode.innerHTML = ''
 
-            recordingPlayer = document.createElement('video')
-            recordingPlayer.muted = (arg instanceof MediaStream)
+            recording_player = document.createElement('video')
+            recording_player.muted = (arg instanceof MediaStream)
 
-            recordingPlayer.addEventListener('loadedmetadata', function() {
+            recording_player.addEventListener('loadedmetadata', function() {
                 if (navigator.userAgent.toLowerCase().indexOf('android') == -1) return
             }, false)
 
-            recordingPlayer.poster = ''
+            recording_player.poster = ''
 
             if (arg instanceof MediaStream) {
-                recordingPlayer.srcObject = arg
+                recording_player.srcObject = arg
             } else {
-                recordingPlayer.src = getURL(arg)
+                recording_player.src = getURL(arg)
             }
 
-            if (typeof recordingPlayer.play === 'function') recordingPlayer.play()
+            if (typeof recording_player.play === 'function') recording_player.play()
 
-            recordingPlayer.addEventListener('ended', function() {
+            recording_player.addEventListener('ended', function() {
                 if (arg instanceof MediaStream) {
-                    recordingPlayer.srcObject = arg
+                    recording_player.srcObject = arg
                 } else {
-                    recordingPlayer.src = getURL(arg)
+                    recording_player.src = getURL(arg)
                 }
             })
 
-            parentNode.appendChild(recordingPlayer)
+            parentNode.appendChild(recording_player)
         } // END function setVideoURL
     </script>
 
