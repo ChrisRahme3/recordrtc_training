@@ -1,4 +1,4 @@
-body {
+:root {
     font-family: "Segoe UI", "Open Sans", "Ubuntu", "Calibri", "Corbel", Tahoma, Sans-Serif;
     background: #B0D0F0;
 }
@@ -9,6 +9,8 @@ body {
     display: block;
     padding-top: 0;
 }
+
+
 
 #recording-page video,
 #recording-page img {
@@ -22,10 +24,6 @@ body {
 
 #recording-page option[disabled] {
     display: none;
-}
-
-#recording-page select {
-    font-size: 17px;
 }
 
 
@@ -91,9 +89,18 @@ body {
 }
 
 
+
+#recording-page select,
+#recording-page select option {
+    font-size: 1.1rem;
+}
+
+
+
 #recording-control .btn {
     width: 100%;
     margin-bottom: 1rem;
+    font-size: 1.1rem;
     line-height: 1.75rem;
 }
 
