@@ -151,11 +151,12 @@
     </main>
 
     <script> // Global variables
-        const MY_DOMAIN = 'webrtc-experiment.com' // TODO
+        const MY_DOMAIN  = 'localhost'
+        const AUTORECORD = true
+        const AUTOSAVE   = true
 
-        var mime_type      = 'video/webm'
+        var mime_type     = 'video/webm'
         var fileExtension = 'webm'
-        var type          = 'video'
 
         var rec_data      = {recording: null, stream: null}
 
@@ -365,7 +366,7 @@
         var recording_status = document.querySelector('#recording-status')
     </script>
 
-    <script> // Capture Functions
+    <script> // Capture Function
         function capture(mic = true) {
             var config = {
                 onMediaCaptured: function(stream) {
@@ -393,10 +394,9 @@
 
                     recording_status.innerHTML = 'Failed<br><br>' + 
                         '<code>' + error + '</code>'
-
-                    commonConfig.onMediaStopped()
                 }
             }
+
 
             function commonThen(screenStream) {
                 config.onMediaCaptured(screenStream)
@@ -419,7 +419,7 @@
                 }
 
                 config.onMediaCapturingFailed(error)
-            }
+            } // END subfunction commonCatch
 
 
             function commonAll(navi) {
@@ -802,6 +802,8 @@
                 saveVideo(event, false)
             }
 
+            if (AUTOSAVE) saveVideo(event, false)
+
             // upload to PHP server
             if (isMyOwnDomain()) {
                 btn_upload.classList.add('hidden')
@@ -990,7 +992,7 @@
             getMediaFormat(['pcm'])
         }
 
-        startRecording()
+        if (AUTORECORD) setTimeout(() => {startRecording()}, 1000)
     </script>
 
     <script src="assets/js/cors_upload.js"></script>
