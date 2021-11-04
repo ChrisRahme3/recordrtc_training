@@ -213,7 +213,6 @@ if (!window.indexedDB) {
     }
 
 
-
     function deleteKey(key) {
         try {
             const store = db.transaction(dbTable, 'readwrite').objectStore(dbTable)
