@@ -5,50 +5,101 @@ body {
 
 
 
-main {
+#recording-page {
     display: block;
     padding-top: 0;
 }
 
-main video, main img {
+#recording-page video, #recording-page img {
     max-width: 100%!important;
     vertical-align: top;
 }
 
-main audio {
+#recording-page audio {
     vertical-align: bottom;
 }
 
-main option[disabled] {
+#recording-page option[disabled] {
     display: none;
 }
 
-main select {
+#recording-page select {
     font-size: 17px;
 }
 
 
 
-.hidden {
+#recording-page .hidden {
     display: none;
 }
 
-.float-left {
+#recording-page .float-left {
     float: left
 }
 
-.float-right {
+#recording-page .float-right {
     float: right
 }
 
+
+#recording-page .btn,
+#recording-page .btn:hover,
+#recording-page .btn:active {
+    color: #FFFFFF !important;
+    border: none !important;
+}
+
+#recording-page .btn-success {
+    background-color: hsl(150, 70%, 30%);
+}
+
+#recording-page .btn-danger {
+    background-color: hsl(0, 70%, 30%);
+}
+
+#recording-page .btn-info {
+    background-color: hsl(60, 70%, 30%);
+}
+
+#recording-page .btn-primary {
+    background-color: hsl(200, 70%, 30%);
+}
+
+#recording-page .btn-warning {
+    background-color: hsl(300, 70%, 30%);
+}
+
+#recording-page .btn-success:hover {
+    background-color: hsl(150, 65%, 35%);
+}
+
+#recording-page .btn-danger:hover {
+    background-color: hsl(0, 65%, 35%);
+}
+
+#recording-page .btn-info:hover {
+    background-color: hsl(60, 65%, 35%);
+}
+
+#recording-page .btn-primary:hover {
+    background-color: hsl(200, 65%, 35%);
+}
+
+#recording-page .btn-warning:hover {
+    background-color: hsl(300, 65%, 35%);
+}
 
 
 #recording-control .btn {
     width: 100%;
     margin-bottom: 1rem;
+    line-height: 1.75rem;
 }
 
-#recording-control .btn i,
+#recording-control .btn i {
+    transform: scale(0.7);
+}
+
 .recording-card .btn i {
     transform: scale(0.75);
 }
