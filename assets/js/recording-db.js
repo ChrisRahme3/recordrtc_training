@@ -7,8 +7,8 @@ window.URL            = window.URL || window.webkitURL
 if (!window.indexedDB) {
     window.alert('Your browser doesn\'t support a stable version of IndexedDB.')
 } else {
-    const dbName  = 'record-db-temp21314gdfgdfdghfdghfsdasduygasfssdfsdaadas5624'
-    const dbTable = 'recordings-fasfdsshdhdasd'
+    const dbName  = 'record-db-temp' //'record-db-temp21314gdfgdfdghfdghfsdasduygasfssdfsdaadas5624'
+    const dbTable = 'recordings' //'recordings-fasfdsshdhdasd'
 
     var request  = window.indexedDB.open(dbName, 1)
     var allEntries = []

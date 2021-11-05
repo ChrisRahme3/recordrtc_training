@@ -116,27 +116,27 @@
 
                     <button id="btn-start" class="btn btn-success">
                         <i class="fas fa-play"></i>
-                        Start
+                        Start Recording
                     </button>
 
                     <button id="btn-stop" class="btn btn-danger hidden">
                         <i class="fas fa-stop"></i>
-                        Stop
+                        Stop Recording
                     </button>
 
                     <button id="btn-save" class="btn btn-info hidden">
                         <i class="fas fa-database"></i>
-                        Save
+                        Save in Browser
                     </button>
 
                     <button id="btn-download" class="btn btn-primary hidden">
                         <i class="fas fa-download"></i>
-                        Download
+                        Download File
                     </button>
 
                     <button id="btn-upload" class="btn btn-warning hidden">
                         <i class="fas fa-upload"></i>
-                        Upload
+                        Upload File
                     </button>
                 </div>
 
@@ -149,6 +149,8 @@
 
         <div id="playback-history" class="row"></div>
     </main>
+
+
 
     <script> // Global variables
         const MY_DOMAIN  = 'localhost'
@@ -315,12 +317,13 @@
             var filetype_options = []
 
             var checks = [
-                [isMimeTypeSupported('video/webm\;codecs=h264'),      'mp4',         'MP4 (H264)'        ],
-                [isMimeTypeSupported('video/x-matroska;codecs=avc1'), 'mkv',         'MKV'               ],
-                [true,                                                'vp8',         'WebM (VP8)'        ],
-                [isMimeTypeSupported('video/webm\;codecs=vp9'),       'vp9',         'WebM (VP9)'        ],
-                [DetectRTC.browser.name == 'Chrome',                  'whammy',      'WebM (Whammy)'     ],
-                [DetectRTC.browser.name == 'Chrome',                  'WebAssembly', 'WebM (WebAssembly)'],
+                [isMimeTypeSupported('video/mp4\;codecs=h264'),       'mp4',         'MP4'        ],
+                [isMimeTypeSupported('video/webm\;codecs=h264'),      'h264',        'H264'       ],
+                [isMimeTypeSupported('video/x-matroska;codecs=avc1'), 'mkv',         'MKV'        ],
+                [true,                                                'vp8',         'VP8'        ],
+                [isMimeTypeSupported('video/webm\;codecs=vp9'),       'vp9',         'VP9'        ],
+                [DetectRTC.browser.name == 'Chrome',                  'whammy',      'Whammy'     ],
+                [DetectRTC.browser.name == 'Chrome',                  'WebAssembly', 'WebAssembly'],
             ]
 
             checks.forEach(function (check) {
@@ -366,125 +369,12 @@
         var recording_status = document.querySelector('#recording-status')
     </script>
 
-    <script> // Capture Function
-        function capture(mic = true) {
-            var config = {
-                onMediaCaptured: function(stream) {
-                    rec_data.stream = stream
-                    btn_start.mediaCapturedCallback()
-
-                    btn_start.classList.add('hidden')
-                    btn_stop.classList.remove('hidden')
-
-                    recording_status.innerHTML = 'In progress'
-                },
-
-                onMediaStopped: function() {
-                    btn_stop.classList.add('hidden')
-                    btn_start.classList.remove('hidden')
-
-                    recording_status.innerHTML = 'Inactive'
-                },
-
-                onMediaCapturingFailed: function(error) {
-                    console.error('onMediaCapturingFailed:', error)
-
-                    btn_stop.classList.add('hidden')
-                    btn_start.classList.remove('hidden')
-
-                    recording_status.innerHTML = 'Failed<br><br>' + 
-                        '<code>' + error + '</code>'
-                }
-            }
-
-
-            function commonThen(screenStream) {
-                config.onMediaCaptured(screenStream)
-
-                addStreamStopListener(screenStream, function() {
-                    btn_start.onclick()
-                })
-
-                setVideoURL(screenStream)
-            } // END subfunction commonThen
-
-
-            function commonCatch(error) {
-                if (error && (error.name === 'ConstraintNotSatisfiedError' || error.name === 'OverconstrainedError')) {
-                    alert('Your browser does not support the selected resolution or frame-rates. \n\nPlease select "default".')
-                } else if (error && error.message) {
-                    alert(error.message)
-                } else {
-                    alert('Unable to make getUserMedia request. Please check browser console logs.')
-                }
-
-                config.onMediaCapturingFailed(error)
-            } // END subfunction commonCatch
-
-
-            function commonAll(navi) {
-                media_constraints = getMediaConstraints()
-
-                navi.getDisplayMedia(
-                    media_constraints
-                ).then(screenStream => {
-                    if (mic) {
-                        navigator.mediaDevices.getUserMedia({
-                            audio: true
-                        }).then(function(mic) {
-                            screenStream.addTrack(mic.getTracks()[0])
-                            commonThen(screenStream)
-                        }).catch(function(error) {
-                            commonCatch(error)
-                        })
-                    } else {
-                        commonThen(screenStream)
-                    }
-                }).catch(function(error) {
-                    commonCatch(error)
-                })
-            } // END subfunction commonAll
-
-
-            if (navigator.getDisplayMedia) {
-                commonAll(navigator)
-            } else if (navigator.mediaDevices.getDisplayMedia) {
-                commonAll(navigator.mediaDevices)
-            } else {
-                var error = 'getDisplayMedia API is not supported in this browser.'
-                config.onMediaCapturingFailed(error)
-                alert(error)
-            }
-        }
-    </script>
-    
     <script> // Initialization
         window.onbeforeunload = function() {
             media_sound.disabled = false
             media_format.disabled = false
         }
-
-
-        btn_start.onclick = function(event) {
-            if (event) event.preventDefault()
-            if (!event) return
-            
-            startRecording()
-        } // END btn_start.onclick
-
-
-        btn_stop.onclick = function(event) {
-            if (event) event.preventDefault()
-            
-            stopRecording()
-        } // END btn_stop.onclick
-
-
-        setInterval(function () {
-            readTable()
-        }, 10000)
     </script>
-
 
     <script> // Video Formatting Data
         function getResolution(constraints) {
@@ -581,23 +471,126 @@
         } // END function getMediaConstraints
     </script>
 
+    <script> // Capture Function
+        function capture(mic = true) {
+            var config = {
+                onMediaCaptured: function(stream) {
+                    rec_data.stream = stream
+                    btn_start.mediaCapturedCallback()
+
+                    btn_start.classList.add('hidden')
+                    btn_stop.classList.remove('hidden')
+
+                    recording_status.innerHTML = 'In progress'
+                },
+
+                onMediaStopped: function() {
+                    btn_stop.classList.add('hidden')
+                    btn_start.classList.remove('hidden')
+
+                    recording_status.innerHTML = 'Inactive'
+                },
+
+                onMediaCapturingFailed: function(error) {
+                    console.error('onMediaCapturingFailed:', error)
+
+                    btn_stop.classList.add('hidden')
+                    btn_start.classList.remove('hidden')
+
+                    recording_status.innerHTML = 'Failed<br><br>' + 
+                        '<code>' + error + '</code>'
+                }
+            }
+
+
+            function commonThen(screenStream) {
+                config.onMediaCaptured(screenStream)
+
+                addStreamStopListener(screenStream, function() {
+                    btn_start.onclick()
+                })
+
+                setVideoURL(screenStream)
+            } // END subfunction commonThen
+
+
+            function commonCatch(error) {
+                if (error && (error.name === 'ConstraintNotSatisfiedError' || error.name === 'OverconstrainedError')) {
+                    alert('Your browser does not support the selected resolution or frame-rates. \n\nPlease select "default".')
+                } else if (error && error.message) {
+                    alert(error.message)
+                } else {
+                    alert('Unable to make getUserMedia request. Please check browser console logs.')
+                }
+
+                config.onMediaCapturingFailed(error)
+            } // END subfunction commonCatch
+
+
+            function commonAll(navi) {
+                media_constraints = getMediaConstraints()
+
+                navi.getDisplayMedia(
+                    media_constraints
+                ).then(screenStream => {
+                    if (mic) {
+                        navigator.mediaDevices.getUserMedia({
+                            audio: true
+                        }).then(function(mic) {
+                            screenStream.addTrack(mic.getTracks()[0])
+                            commonThen(screenStream)
+                        }).catch(function(error) {
+                            commonCatch(error)
+                        })
+                    } else {
+                        commonThen(screenStream)
+                    }
+                }).catch(function(error) {
+                    commonCatch(error)
+                })
+            } // END subfunction commonAll
+
+
+            if (navigator.getDisplayMedia) {
+                commonAll(navigator)
+            } else if (navigator.mediaDevices.getDisplayMedia) {
+                commonAll(navigator.mediaDevices)
+            } else {
+                var error = 'getDisplayMedia API is not supported in this browser.'
+                config.onMediaCapturingFailed(error)
+                alert(error)
+            }
+        }
+    </script>
 
     <script> // Start/Stop
+        btn_start.onclick = function(event) {
+            if (event) event.preventDefault()
+            if (!event) return
+            
+            startRecording()
+        } // END btn_start.onclick
+
+
+        btn_stop.onclick = function(event) {
+            if (event) event.preventDefault()
+            
+            stopRecording()
+        } // END btn_stop.onclick
+        
+        
         function startRecording() {
             btn_start.classList.add('hidden')
             btn_stop.classList.remove('hidden')
-
             btn_download.classList.add('hidden')
             btn_save.classList.add('hidden')
             btn_upload.classList.add('hidden')
 
-            const check_conditions = [media_format.value, mime_type, fileExtension, recorderType]
             const checks = [
-                ['h264',        'video/mpeg',                   'mp4'],
-                ['h264',        'video/webm\;codecs=h264',      'mp4'],
-                ['mp4',         'video/mpeg',                   'mp4'],
-                ['mp4',         'video/webm\;codecs=h264',      'mp4'],
-                ['mkv',         'video/x-matroska;codecs=avc1', 'mkv'],
+                ['m1v',         'video/mpeg',                   'm1v' ],
+                ['mp4',         'video/mp4',                    'mp4' ],
+                ['h264',        'video/webm\;codecs=h264',      'mp4' ],
+                ['mkv',         'video/x-matroska;codecs=avc1', 'mkv' ],
                 ['whammy',      'video/webm',                   'webm', WhammyRecorder,    ],
                 ['WebAssembly', 'video/webm',                   'webm', WebAssemblyRecorder],
                 ['vp8',         'video/webm\;codecs=vp8',       'webm', null,              ],
@@ -655,7 +648,7 @@
             btn_start.classList.remove('hidden')
             btn_download.classList.remove('hidden')
             btn_save.classList.remove('hidden')
-            //btn_upload.classList.remove('hidden')
+            btn_upload.classList.remove('hidden')
 
             if (rec_data.recording) {
                 rec_data.recording.stopRecording(function(url) {
@@ -673,11 +666,10 @@
 
                     media_element_container.children[0].controls = true
                 })
+
+                if (AUTOSAVE) setTimeout(() => {saveVideo(event, false)}, 500)
             }
         } // END function stopRecording
-
-        
-
     </script>
 
     <script> // Endings
@@ -777,19 +769,21 @@
 
 
         function readyDownload() {
-            if (!rec_data.recording.getBlob().size) {
+            const blob = rec_data.recording.getBlob()
+
+            if (!blob.size) {
                 var info = getFailureReport()
 
-                console.error('blob', rec_data.recording.getBlob())
-                console.error('recordrtc instance', rec_data.recording)
-                console.error('report', info)
+                console.error('Blob:', blob)
+                console.error('RecordRTC instance:', rec_data.recording)
+                console.error('Report:', info)
 
-                if (media_format.value !== 'default') {
-                    alert('Recording failed using ' + media_format.value + '. Please choose "default" option from the drop down and record again.')
+                if (media_format.value !== 'vp9' && DetectRTC.browser.name === 'Chrome') {
+                    alert(`Recording failed using ${media_format.value}. Please choose "VP9" from the dropdown and record again.`)
+                } else if (media_format.value !== 'default') {
+                    alert(`Recording failed using ${media_format.value}. Please choose "Default" from the dropdown and record again.`)
                 } else {
                     alert('Recording failed. Unexpected issue. Please see console log.')
-                } if (media_format.value !== 'vp9' && DetectRTC.browser.name === 'Chrome') {
-                    alert('Please record using VP9 format.')
                 }
             }
 
@@ -800,8 +794,6 @@
             btn_save.onclick = function(event) {
                 saveVideo(event, false)
             }
-
-            if (AUTOSAVE) saveVideo(event, false)
 
             // upload to PHP server
             if (isMyOwnDomain()) {
@@ -845,12 +837,12 @@
 
 
         function uploadVideo(filename, recordRTC, callback) {
-            var blob = recordRTC instanceof Blob ? recordRTC : Object.assign(media_constraints, recordRTC.getBlob())
+            var blob = recordRTC instanceof Blob ? recordRTC : recordRTC.getBlob()
             
             blob = new File(
                 [blob],
-                makeFileName(fileExtension),
-                Object.assign(media_constraints.video.mandatory, {type: mime_type, bitrate: media_bitrate})
+                filename,
+                {type: mime_type, bitrate: media_bitrate}
             )
 
             // create FormData
@@ -860,11 +852,8 @@
 
             callback('Uploading to server')
 
-            // var upload_url = 'https://your-domain.com/files-uploader/'
-            var upload_url = 'RecordRTC-to-PHP/save.php'
-
-            // var upload_directory = upload_url
-            var upload_directory = 'RecordRTC-to-PHP/uploads/'
+            const upload_url = `https://${MY_DOMAIN}/files-uploader/`
+            const upload_directory = upload_url
 
             makeXMLHttpRequest(upload_url, formData, function(progress) {
                 if (progress !== 'upload-ended') {
@@ -872,7 +861,7 @@
                     return
                 }
 
-                callback('ended', upload_directory + filename)
+                callback('Ended', upload_directory + filename)
             })
         } // END function uploadVideo
 
@@ -983,13 +972,14 @@
             ['#media-resolution', '#media-framerate', '#media-bitrate', '#media-sound', '#media-format']
         )
 
-
         if (typeof MediaRecorder === 'undefined' && (DetectRTC.browser.name === 'Edge' || DetectRTC.browser.name === 'Safari')) {
             console.warn('MediaRecorder API and webp are not supported in ' + DetectRTC.browser.name + '.')
 
             media_sound.innerHTML = '<option value="with-sound">With Sound</option>'
             getMediaFormat(['pcm'])
         }
+
+        setInterval(() => {readTable()}, 5000)
 
         if (AUTORECORD) setTimeout(() => {startRecording()}, 1000)
     </script>
