@@ -1,16 +1,28 @@
+/* Global */
 :root, html, body {
     font-family: "Segoe UI", "Open Sans", "Ubuntu", "Calibri", "Corbel", Tahoma, Sans-Serif;
     background: #B0D0F0;
 }
 
+.hidden {
+    display: none;
+}
+
+.float-left {
+    float: left
+}
+
+.float-right {
+    float: right
+}
 
 
+
+/* Media */
 #recording-page {
     display: block;
     padding-top: 0;
 }
-
-
 
 #recording-page video,
 #recording-page img {
@@ -22,25 +34,25 @@
     vertical-align: bottom;
 }
 
+#media-element-container {
+    border: 1px solid;
+}
+
+
+
+/* Inputs */
 #recording-page option[disabled] {
     display: none;
 }
 
-
-
-#recording-page .hidden {
-    display: none;
-}
-
-#recording-page .float-left {
-    float: left
-}
-
-#recording-page .float-right {
-    float: right
+#recording-page select,
+#recording-page select option {
+    font-size: 1.1rem;
 }
 
 
+
+/* Buttons - General */
 #recording-page .btn,
 #recording-page .btn:hover,
 #recording-page .btn:active {
@@ -89,19 +101,8 @@
 }
 
 
-#media-element-container {
-    border: 1px solid;
-}
 
-
-
-#recording-page select,
-#recording-page select option {
-    font-size: 1.1rem;
-}
-
-
-
+/* Buttons */
 #recording-control .btn {
     width: 100%;
     margin-bottom: 1rem;
@@ -119,6 +120,7 @@
 
 
 
+/* Recording Card */
 .recording-card {
     padding: 1rem;
 }
